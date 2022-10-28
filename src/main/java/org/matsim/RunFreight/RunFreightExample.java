@@ -16,12 +16,15 @@
  *                                                                         *
  * *********************************************************************** */
 
-package org.matsim.codeexamples.extensions.freight;
+package org.matsim.RunFreight;
 
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.freight.Freight;
 import org.matsim.contrib.freight.FreightConfigGroup;
+import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
+import org.matsim.contrib.freight.carrier.CarrierShipment;
+import org.matsim.contrib.freight.carrier.CarrierUtils;
 import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -65,6 +68,21 @@ public class RunFreightExample {
 
 		// how to set the capacity of the "light" vehicle type to "1":
 //		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 1 );
+
+		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
+			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
+				var size = carrierShipment.getSize()*2;
+				var  newShipment = CarrierShipment.Builder.newInstance(carrierShipment.getId(),carrierShipment.getFrom(),carrierShipment.getTo(),size)
+						.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
+						.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
+						.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
+						.setPickupServiceTime(carrierShipment.getPickupServiceTime())
+						.build();
+				CarrierUtils.addShipment(carrier,newShipment);
+			}
+		}
+
+
 
 		// output before jsprit run (not necessary)
 		new CarrierPlanXmlWriterV2(FreightUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;
