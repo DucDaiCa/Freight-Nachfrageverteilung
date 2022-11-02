@@ -75,10 +75,13 @@ public class RunFreightExample {
 		//load carriers according to freight config
 		FreightUtils.loadCarriersAccordingToFreightConfig( scenario );
 
+		// Write out the original carriers file - before any modification is done
+		new CarrierPlanXmlWriterV2(FreightUtils.getCarriers( scenario )).write( "output/originalCarriers.xml" ) ;
+
 		// how to set the capacity of the "light" vehicle type to "1":
-//		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 1 );
-
-
+		//Ich habe die Kapazität mal auf 20 erhöht, weil er sonst einen Teil der Aufträge nicht fahren kann (Fzg-Kapazität war 5; Aufträge hatten aber auch Größe 7 und 10)
+		// Weil wir es unten ja "Demo-halber" verdoppeln, muss als das Fahrzeug wenigstens 20 Einheiten transportieren können.
+		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 20 );
 
 
 //		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("heavy",VehicleType.class)).getCapacity();
@@ -104,12 +107,10 @@ public class RunFreightExample {
 						.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
 						.setPickupServiceTime(carrierShipment.getPickupServiceTime())
 						.build();
-				CarrierUtils.addShipment(carrier,newShipment);
+				CarrierUtils.addShipment(carrier,newShipment); //füge das neue Shipment hinzu
+				carrier.getShipments().remove(carrierShipment); //und lösche das alte heraus
 			}
 		}
-
-
-
 
 
 
