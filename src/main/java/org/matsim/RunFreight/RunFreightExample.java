@@ -20,12 +20,12 @@ package org.matsim.RunFreight;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.contrib.freight.Freight;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
 import org.matsim.contrib.freight.carrier.CarrierShipment;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
+import org.matsim.contrib.freight.controler.CarrierModule;
 import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -126,7 +126,7 @@ public class RunFreightExample {
 
 		// ## MATSim configuration:  ##
 		final Controler controler = new Controler( scenario ) ;
-		Freight.configure( controler );
+		controler.addOverridingModule(new CarrierModule() );
 
 		// otfvis (if you want to use):
 //		OTFVisConfigGroup otfVisConfigGroup = ConfigUtils.addOrGetModule( config, OTFVisConfigGroup.class );
