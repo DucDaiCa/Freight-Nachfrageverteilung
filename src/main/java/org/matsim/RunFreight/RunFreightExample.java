@@ -18,6 +18,7 @@
 
 package org.matsim.RunFreight;
 
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.freight.Freight;
 import org.matsim.contrib.freight.FreightConfigGroup;
@@ -32,8 +33,11 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.examples.ExamplesUtils;
+import org.matsim.utils.objectattributes.attributable.Attributes;
+import org.matsim.vehicles.VehicleCapacity;
+import org.matsim.vehicles.VehicleType;
 
-import java.net.URL;
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 
@@ -57,8 +61,13 @@ public class RunFreightExample {
 
 		//freight settings
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightConfigGroup.class ) ;
-		freightConfigGroup.setCarriersFile( "singleCarrierFiveActivitiesWithoutRoutes.xml");
+		//freightConfigGroup.setCarriersFile( "singleCarrierFiveActivitiesWithoutRoutes.xml");
+		//freightConfigGroup.setCarriersFile( "carrierPlansWithoutRoutesAndBigVehicles.xml");
+
+		freightConfigGroup.setCarriersFile( "singleCarrierFiveActivitiesWithoutRoutes_Shipments.xml");
+
 		freightConfigGroup.setCarriersVehicleTypesFile( "vehicleTypes.xml");
+
 
 		// load scenario (this is not loading the freight material):
 		Scenario scenario = ScenarioUtils.loadScenario( config );
@@ -69,10 +78,27 @@ public class RunFreightExample {
 		// how to set the capacity of the "light" vehicle type to "1":
 //		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 1 );
 
+
+
+
+//		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("heavy",VehicleType.class)).getCapacity();
+//		Collection<VehicleType> vehicles1 = FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values();
+//		System.out.println("TEST !"+vehicles1);
+//
+//		for(VehicleType vehicles : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
+//			Attributes attribute = vehicles.getAttributes();
+//			VehicleCapacity vehicleCapacity = vehicles.getCapacity();
+//			VehicleCapacity vehicleCapacity.setOther(20.0);
+//			vehicleCapacity.getAttributes().size();
+//
+//		}
+
+
+		// building new shipments
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
-				var size = carrierShipment.getSize()*2;
-				var  newShipment = CarrierShipment.Builder.newInstance(carrierShipment.getId(),carrierShipment.getFrom(),carrierShipment.getTo(),size)
+				int size = carrierShipment.getSize()*2;
+				CarrierShipment newShipment = CarrierShipment.Builder.newInstance(carrierShipment.getId(),carrierShipment.getFrom(),carrierShipment.getTo(),size)
 						.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
 						.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
 						.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
@@ -81,6 +107,9 @@ public class RunFreightExample {
 				CarrierUtils.addShipment(carrier,newShipment);
 			}
 		}
+
+
+
 
 
 
