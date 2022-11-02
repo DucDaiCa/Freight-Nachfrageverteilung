@@ -12,13 +12,11 @@
 	<properties>
 
 		<!-- release -->
-		<matsim.version>14.0</matsim.version>
+<!--		<matsim.version>14.0</matsim.version>-->
 
-		<!--        new release(?)-->
-		<!--	<matsim.version>15.0-PR2257</matsim.version>-->
 
 		<!-- PR (= pull request) release -->
-		<!--		<matsim.version>13.1-PR1536</matsim.version> -->
+        <matsim.version>15.0-PR2257</matsim.version>
 
 		<!-- for dependency sharing in IDE -->
 <!--				<matsim.version>15.0-SNAPSHOT</matsim.version>-->
