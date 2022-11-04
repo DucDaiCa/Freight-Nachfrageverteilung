@@ -21,10 +21,7 @@ package org.matsim.RunFreight;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.freight.FreightConfigGroup;
-import org.matsim.contrib.freight.carrier.Carrier;
-import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
-import org.matsim.contrib.freight.carrier.CarrierShipment;
-import org.matsim.contrib.freight.carrier.CarrierUtils;
+import org.matsim.contrib.freight.carrier.*;
 import org.matsim.contrib.freight.controler.CarrierModule;
 import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
@@ -33,11 +30,8 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.examples.ExamplesUtils;
-import org.matsim.utils.objectattributes.attributable.Attributes;
-import org.matsim.vehicles.VehicleCapacity;
 import org.matsim.vehicles.VehicleType;
 
-import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 
@@ -89,15 +83,26 @@ public class RunFreightExample {
 //		System.out.println("TEST !"+vehicles1);
 //
 //		for(VehicleType vehicles : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
-//			Attributes attribute = vehicles.getAttributes();
-//			VehicleCapacity vehicleCapacity = vehicles.getCapacity();
-//			VehicleCapacity vehicleCapacity.setOther(20.0);
-//			vehicleCapacity.getAttributes().size();
+//			vehicles.getCapacity().setSeats(2);
+//			VehicleCapacity vehicleCapacity = vehicles.getCapacity().setOther(20.0);
+//
 //
 //		}
+		//changing service demand capacity
+		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
+			for (org.matsim.contrib.freight.carrier.CarrierService carrierService: carrier.getServices().values() ){
+				int demand = carrierService.getCapacityDemand()*10;
+				CarrierService newService = CarrierService.Builder.newInstance(carrierService.getId(),carrierService.getLocationLinkId())
+						.setCapacityDemand(demand)
+						.setServiceDuration(carrierService.getServiceDuration())
+						.setServiceStartTimeWindow(carrierService.getServiceStartTimeWindow())
+						.build();
+				CarrierUtils.addService(carrier,newService);
+			}
+		}
 
 
-		// building new shipments
+		// changing shipment size
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
 				int size = carrierShipment.getSize()*2;
@@ -108,7 +113,7 @@ public class RunFreightExample {
 						.setPickupServiceTime(carrierShipment.getPickupServiceTime())
 						.build();
 				CarrierUtils.addShipment(carrier,newShipment); //füge das neue Shipment hinzu
-				carrier.getShipments().remove(carrierShipment); //und lösche das alte heraus
+				//carrier.getShipments().remove(carrierShipment); //und lösche das alte heraus
 			}
 		}
 
