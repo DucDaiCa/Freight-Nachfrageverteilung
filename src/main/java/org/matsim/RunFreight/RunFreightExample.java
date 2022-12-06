@@ -18,6 +18,8 @@
 
 package org.matsim.RunFreight;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.freight.FreightConfigGroup;
@@ -30,8 +32,10 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.examples.ExamplesUtils;
+import org.matsim.vehicles.VehicleCapacity;
 import org.matsim.vehicles.VehicleType;
 
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 
@@ -39,6 +43,8 @@ import java.util.concurrent.ExecutionException;
  * @see org.matsim.contrib.freight
  */
 public class RunFreightExample {
+
+	private static final Logger log = LogManager.getLogger(RunFreightExample.class);
 
 	public static void main(String[] args) throws ExecutionException, InterruptedException{
 
@@ -48,13 +54,15 @@ public class RunFreightExample {
 
 		config.plans().setInputFile( null ); // remove passenger input
 
-		//more general settings
+		// more general settings
 		config.controler().setOutputDirectory("./output/freight" );
 
 		config.controler().setLastIteration(0 );		// yyyyyy iterations currently do not work; needs to be fixed.  (Internal discussion at end of file.)
 
-		//freight settings
+		// freight settings
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightConfigGroup.class ) ;
+
+
 		//freightConfigGroup.setCarriersFile( "singleCarrierFiveActivitiesWithoutRoutes.xml");
 		//freightConfigGroup.setCarriersFile( "carrierPlansWithoutRoutesAndBigVehicles.xml");
 
@@ -66,7 +74,7 @@ public class RunFreightExample {
 		// load scenario (this is not loading the freight material):
 		Scenario scenario = ScenarioUtils.loadScenario( config );
 
-		//load carriers according to freight config
+		// load carriers according to freight config
 		FreightUtils.loadCarriersAccordingToFreightConfig( scenario );
 
 		// Write out the original carriers file - before any modification is done
@@ -78,34 +86,42 @@ public class RunFreightExample {
 		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 20 );
 
 
-//		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("heavy",VehicleType.class)).getCapacity();
-//		Collection<VehicleType> vehicles1 = FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values();
-//		System.out.println("TEST !"+vehicles1);
-//
-//		for(VehicleType vehicles : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
-//			vehicles.getCapacity().setSeats(2);
-//			VehicleCapacity vehicleCapacity = vehicles.getCapacity().setOther(20.0);
-//
-//
-//		}
-		//changing service demand capacity
-		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
+
+
+		log.info("Ausgabe der VehicleTypes: "+FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes());
+
+		//int vehicles1 = FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values().size();
+		//log.info("Welche Wagen habe wir: "+vehicles1);
+
+
+		// What vehicle types do we have
+		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
+			//vehicleType.getCapacity().setSeats(2);
+			//VehicleCapacity vehicleCapacity =vehicleType.getCapacity().setOther(30.0);
+			log.info(vehicleType.getId()+": "+vehicleType.getCapacity().getOther());
+		}
+
+
+
+		// changing service demand capacity of existing services
+		/*for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			for (org.matsim.contrib.freight.carrier.CarrierService carrierService: carrier.getServices().values() ){
-				int demand = carrierService.getCapacityDemand()*10;
+				int demand = carrierService.getCapacityDemand()*6;
 				CarrierService newService = CarrierService.Builder.newInstance(carrierService.getId(),carrierService.getLocationLinkId())
 						.setCapacityDemand(demand)
 						.setServiceDuration(carrierService.getServiceDuration())
 						.setServiceStartTimeWindow(carrierService.getServiceStartTimeWindow())
 						.build();
 				CarrierUtils.addService(carrier,newService);
+				//carrier.getServices().remove(carrierService);
 			}
-		}
+		}*/
 
 
-		// changing shipment size
+		// changing shipment size of existing shipment
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
-				int size = carrierShipment.getSize()*2;
+				int size = carrierShipment.getSize()*3;
 				CarrierShipment newShipment = CarrierShipment.Builder.newInstance(carrierShipment.getId(),carrierShipment.getFrom(),carrierShipment.getTo(),size)
 						.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
 						.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
@@ -114,8 +130,43 @@ public class RunFreightExample {
 						.build();
 				CarrierUtils.addShipment(carrier,newShipment); //füge das neue Shipment hinzu
 				//carrier.getShipments().remove(carrierShipment); //und lösche das alte heraus
+				log.info("GetTo: "+carrierShipment.getTo()+ "GetFrom: "+carrierShipment.getFrom());
 			}
 		}
+
+		// Test method to reduce shipment size. (Later trying to distribute it)
+		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
+			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
+				//log.info("CarrierShipments ausgeben: " +carrierShipment+ " Carrier ausgeben: "+ carrier);
+				CarrierShipment dummyShipment = carrierShipment; // für die Schleife, wenn shipment nach Halbierung immernoch größer ist als Vehicle Kapazität
+				//log.info("Gib Dummy aus(vorher):  "+dummyShipment);
+
+				while(dummyShipment.getSize()> 10 ) {
+					int rest = dummyShipment.getSize() % 2;
+					int size = dummyShipment.getSize() / 2;
+
+						CarrierShipment newShipment = CarrierShipment.Builder.newInstance(carrierShipment.getId(), carrierShipment.getFrom(), carrierShipment.getTo(), size)
+					//	CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create("90",CarrierShipment.class), carrierShipment.getFrom(), carrierShipment.getTo(), size)
+								.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
+								.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
+								.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
+								.setPickupServiceTime(carrierShipment.getPickupServiceTime())
+								.build();
+
+						dummyShipment = newShipment;
+						//log.info("Gib Dummy aus(nachher):  "+dummyShipment);
+						CarrierUtils.addShipment(carrier, newShipment); //füge das neue Shipment hinzu
+						//carrier.getShipments().remove(carrierShipment); //und lösche das alte heraus
+
+
+						log.info("Rest ausgabe: " + rest + " und Size ausgabe: " + size);
+				}
+
+			}
+		}
+
+
+
 
 
 
