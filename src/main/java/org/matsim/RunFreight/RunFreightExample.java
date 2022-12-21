@@ -157,7 +157,7 @@ public class RunFreightExample {
 				//log.info("Gib size aus: "+dummyShipment.getSize()+" und Value aus: "+Boundary_value);
 				for(int i=1; i <= size; i++) {
 				log.info("dummyShip:"+ carrierShipment.getId());
-
+																						// Hier soll er neue shipments hinzufügen, aber packt das nur in die alten
 					CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId()+"_"+i,CarrierShipment.class), carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
 							.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
 							.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
