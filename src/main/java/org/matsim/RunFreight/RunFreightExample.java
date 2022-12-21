@@ -37,6 +37,7 @@ import org.matsim.vehicles.VehicleType;
 
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
+import java.util.Iterator;
 
 
 /**
@@ -83,12 +84,12 @@ public class RunFreightExample {
 		// how to set the capacity of the "light" vehicle type to "1":
 		//Ich habe die Kapazität mal auf 20 erhöht, weil er sonst einen Teil der Aufträge nicht fahren kann (Fzg-Kapazität war 5; Aufträge hatten aber auch Größe 7 und 10)
 		// Weil wir es unten ja "Demo-halber" verdoppeln, muss als das Fahrzeug wenigstens 20 Einheiten transportieren können.
-		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 20 );
+		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 10 );
 
 
 
 
-		log.info("Ausgabe der VehicleTypes: "+FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes());
+		//log.info("Ausgabe der VehicleTypes: "+FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes());
 
 		//int vehicles1 = FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values().size();
 		//log.info("Welche Wagen habe wir: "+vehicles1);
@@ -96,8 +97,7 @@ public class RunFreightExample {
 
 		// What vehicle types do we have
 		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
-			//vehicleType.getCapacity().setSeats(2);
-			//VehicleCapacity vehicleCapacity =vehicleType.getCapacity().setOther(30.0);
+
 			log.info(vehicleType.getId()+": "+vehicleType.getCapacity().getOther());
 		}
 
@@ -130,23 +130,68 @@ public class RunFreightExample {
 						.build();
 				CarrierUtils.addShipment(carrier,newShipment); //füge das neue Shipment hinzu
 				//carrier.getShipments().remove(carrierShipment); //und lösche das alte heraus
-				log.info("GetTo: "+carrierShipment.getTo()+ "GetFrom: "+carrierShipment.getFrom());
+				//log.info("GetTo: "+carrierShipment.getTo()+ "GetFrom: "+carrierShipment.getFrom());
 			}
 		}
 
-		// Test method to reduce shipment size. (Later trying to distribute it)
-		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
+
+
+		double Boundary_value = FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().getOther();  // Wert der Kapazität der "light" vehicles speichern
+
+		// Test method to reduce shipment size. (Later trying to distribute it) Test.2
+		Collection<Carrier> carrier_Num =  FreightUtils.getCarriers(scenario).getCarriers().values();
+		Iterator<Carrier> it = carrier_Num.iterator() ;
+	//	for (int i = 0; i < carrier_Num.size(); i++){
+	//
+	//	}
+		while(it.hasNext()) {
+			Carrier carrier = it.next();
+			Collection<CarrierShipment> carrierShipment_Num = carrier.getShipments().values();
+			Iterator<CarrierShipment>  it1 = carrierShipment_Num.iterator();
+
+			while (it1.hasNext()){
+				CarrierShipment carrierShipment = it1.next();
+				int size_original =  carrierShipment.getSize();
+				int rest = size_original % (int) Boundary_value;
+				int size = size_original / (int) Boundary_value;
+				//log.info("Gib size aus: "+dummyShipment.getSize()+" und Value aus: "+Boundary_value);
+				for(int i=1; i <= size; i++) {
+				log.info("dummyShip:"+ carrierShipment.getId());
+
+					CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId()+"_"+i,CarrierShipment.class), carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
+							.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
+							.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
+							.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
+							.setPickupServiceTime(carrierShipment.getPickupServiceTime())
+							.build();
+
+					log.info("Sehe ich das hier?");
+					CarrierUtils.addShipment(carrier, newShipment); //füge das neue Shipment hinzu
+					//carrier.getShipments().remove(carrierShipment); //und lösche das alte heraus
+				}
+			log.info("Wie oft gehen wir hier durch");
+			}
+		}
+
+
+		// Test method to reduce shipment size. (Later trying to distribute it) Test.1
+		/*for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
 				//log.info("CarrierShipments ausgeben: " +carrierShipment+ " Carrier ausgeben: "+ carrier);
 				CarrierShipment dummyShipment = carrierShipment; // für die Schleife, wenn shipment nach Halbierung immernoch größer ist als Vehicle Kapazität
 				//log.info("Gib Dummy aus(vorher):  "+dummyShipment);
 
-				while(dummyShipment.getSize()> 10 ) {
-					int rest = dummyShipment.getSize() % 2;
-					int size = dummyShipment.getSize() / 2;
+				int  Size_original = dummyShipment.getSize();
 
-						CarrierShipment newShipment = CarrierShipment.Builder.newInstance(carrierShipment.getId(), carrierShipment.getFrom(), carrierShipment.getTo(), size)
-					//	CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create("90",CarrierShipment.class), carrierShipment.getFrom(), carrierShipment.getTo(), size)
+				int rest = Size_original % (int) Boundary_value;
+				int size = Size_original / (int) Boundary_value;
+				log.info("Gib Size Original: "+Size_original+" und Boundary value aus: "+Boundary_value);
+
+				for(int i=1; i <= size; i++) {
+					String Shipment_Id = String.valueOf(i);
+						log.info("HALLOO");
+					//	CarrierShipment newShipment = CarrierShipment.Builder.newInstance(carrierShipment.getId(), carrierShipment.getFrom(), carrierShipment.getTo(), size)
+						CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId()+"_"+i,CarrierShipment.class), carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
 								.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
 								.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
 								.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
@@ -159,11 +204,13 @@ public class RunFreightExample {
 						//carrier.getShipments().remove(carrierShipment); //und lösche das alte heraus
 
 
-						log.info("Rest ausgabe: " + rest + " und Size ausgabe: " + size);
-				}
 
+				}
+				log.info("Rest ausgabe: " + rest + " und Size ausgabe: " + size);
 			}
-		}
+		}*/
+
+
 
 
 
