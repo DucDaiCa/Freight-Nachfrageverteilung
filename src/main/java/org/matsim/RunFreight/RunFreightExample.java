@@ -64,9 +64,6 @@ public class RunFreightExample {
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightConfigGroup.class ) ;
 
 
-		//freightConfigGroup.setCarriersFile( "singleCarrierFiveActivitiesWithoutRoutes.xml");
-		//freightConfigGroup.setCarriersFile( "carrierPlansWithoutRoutesAndBigVehicles.xml");
-
 		freightConfigGroup.setCarriersFile( "singleCarrierFiveActivitiesWithoutRoutes_Shipments.xml");
 
 		freightConfigGroup.setCarriersVehicleTypesFile( "vehicleTypes.xml");
@@ -134,16 +131,15 @@ public class RunFreightExample {
 			}
 		}
 
-
+        
 
 		double Boundary_value = FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().getOther();  // Wert der Kapazität der "light" vehicles speichern
 
-		// Test method to reduce shipment size. (Later trying to distribute it) Test.2
+		// Test method to create new shipment Test.2
 		Collection<Carrier> carrier_Num =  FreightUtils.getCarriers(scenario).getCarriers().values();
 		Iterator<Carrier> it = carrier_Num.iterator() ;
-	//	for (int i = 0; i < carrier_Num.size(); i++){
-	//
-	//	}
+
+
 		while(it.hasNext()) {
 			Carrier carrier = it.next();
 			Collection<CarrierShipment> carrierShipment_Num = carrier.getShipments().values();
@@ -154,14 +150,14 @@ public class RunFreightExample {
 				int size_original =  carrierShipment.getSize();
 				int rest = size_original % (int) Boundary_value;
 				int size = size_original / (int) Boundary_value;
-				//log.info("Gib size aus: "+dummyShipment.getSize()+" und Value aus: "+Boundary_value);
+				log.info("Gib size aus: "+size+" und Value aus: "+Boundary_value);
 				for(int i=1; i <= size; i++) {
 				log.info("dummyShip:"+ carrierShipment.getId());
 																						// Hier soll er neue shipments hinzufügen, aber packt das nur in die alten
-					CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId()+"_"+i,CarrierShipment.class), carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
+					//CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId()+"_"+i,CarrierShipment.class), carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
+					CarrierShipment newShipment = CarrierShipment.Builder.newInstance(carrierShipment.getId(), carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
 							.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
-							.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
-							.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
+							.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow()).setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
 							.setPickupServiceTime(carrierShipment.getPickupServiceTime())
 							.build();
 
@@ -174,7 +170,7 @@ public class RunFreightExample {
 		}
 
 
-		// Test method to reduce shipment size. (Later trying to distribute it) Test.1
+		//		// Test method to create new shipment Test.2 Test.1
 		/*for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
 				//log.info("CarrierShipments ausgeben: " +carrierShipment+ " Carrier ausgeben: "+ carrier);
