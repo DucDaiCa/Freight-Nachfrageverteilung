@@ -154,8 +154,8 @@ public class RunFreightExample {
 				for(int i=1; i <= size; i++) {
 				log.info("dummyShip:"+ carrierShipment.getId());
 																						// Hier soll er neue shipments hinzufügen, aber packt das nur in die alten
-					//CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId()+"_"+i,CarrierShipment.class), carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
-					CarrierShipment newShipment = CarrierShipment.Builder.newInstance(carrierShipment.getId(), carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
+					CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId()+"_"+i,CarrierShipment.class), carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
+					//CarrierShipment newShipment = CarrierShipment.Builder.newInstance(carrierShipment.getId(), carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
 							.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
 							.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow()).setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
 							.setPickupServiceTime(carrierShipment.getPickupServiceTime())
