@@ -143,10 +143,11 @@ public class RunFreightExample {
 			LinkedList<CarrierShipment> newShipments = new LinkedList<>();  //Liste um die "neuen" Shipments temporör zu speichern, weil man sie nicht während des Iterierens hinzufügen kann.
 			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
 				int size_original = carrierShipment.getSize();
-				int rest = size_original % (int) Boundary_value;
+				int rest = size_original % (int) Boundary_value; //TODO (KMT) Es muss am Ende auch noch ein Shipment mit dem Rest erstellt werden
 				int size = size_original / (int) Boundary_value;
 				log.info("Gib size aus: " + size + " und Value aus: " + Boundary_value);
 				for (int i = 1; i <= size; i++) {  //TODO: (KMT) Ich verstehe diese Schleife nicht. Warum soll er so oft ein neues Shipment erstellen, wie die Größe des neuen Shipments seien soll?
+					//(KMT, ctd.) Scheint vom Ansatz ok zu sein, aber der Variablen-Name "Size" ist vielleicht irreführend.
 					log.info("dummyShip:" + carrierShipment.getId());
 					// Hier soll er neue shipments hinzufügen, aber packt das nur in die alten
 					CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId() + "_" + i, CarrierShipment.class), carrierShipment.getFrom(), carrierShipment.getTo(), (int) Boundary_value)
@@ -166,7 +167,10 @@ public class RunFreightExample {
 			for (CarrierShipment shipmentToAdd : newShipments) {
 				CarrierUtils.addShipment(carrier, shipmentToAdd); //füge das neue Shipment hinzu
 			}
+			//TODO (KMT): Hier noch eine Absicherung rein, dass vorher und nachher die Nachfragemenge identisch ist.
+			//Gbl.assertIf(demandBefore == demandAfter); //Bitte noch die beiden Variablen mit "Leben" füllen.
 		}
+
 
 
 		//		// Test method to create new shipment Test.2 Test.1
