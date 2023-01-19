@@ -29,6 +29,7 @@ import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.gbl.Gbl;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.examples.ExamplesUtils;
@@ -36,6 +37,8 @@ import org.matsim.vehicles.VehicleCapacity;
 import org.matsim.vehicles.VehicleType;
 
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.Iterator;
 
@@ -136,36 +139,32 @@ public class RunFreightExample {
 		double Boundary_value = FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().getOther();  // Wert der Kapazität der "light" vehicles speichern
 
 		// Test method to create new shipment Test.2
-		Collection<Carrier> carrier_Num =  FreightUtils.getCarriers(scenario).getCarriers().values();
-		Iterator<Carrier> it = carrier_Num.iterator() ;
-
-
-		while(it.hasNext()) {
-			Carrier carrier = it.next();
-			Collection<CarrierShipment> carrierShipment_Num = carrier.getShipments().values();
-			Iterator<CarrierShipment>  it1 = carrierShipment_Num.iterator();
-
-			while (it1.hasNext()){
-				CarrierShipment carrierShipment = it1.next();
-				int size_original =  carrierShipment.getSize();
+		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
+			LinkedList<CarrierShipment> newShipments = new LinkedList<>();  //Liste um die "neuen" Shipments temporör zu speichern, weil man sie nicht während des Iterierens hinzufügen kann.
+			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
+				int size_original = carrierShipment.getSize();
 				int rest = size_original % (int) Boundary_value;
 				int size = size_original / (int) Boundary_value;
-				log.info("Gib size aus: "+size+" und Value aus: "+Boundary_value);
-				for(int i=1; i <= size; i++) {
-				log.info("dummyShip:"+ carrierShipment.getId());
-																						// Hier soll er neue shipments hinzufügen, aber packt das nur in die alten
-					CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId()+"_"+i,CarrierShipment.class), carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
-					//CarrierShipment newShipment = CarrierShipment.Builder.newInstance(carrierShipment.getId(), carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
+				log.info("Gib size aus: " + size + " und Value aus: " + Boundary_value);
+				for (int i = 1; i <= size; i++) {  //TODO: (KMT) Ich verstehe diese Schleife nicht. Warum soll er so oft ein neues Shipment erstellen, wie die Größe des neuen Shipments seien soll?
+					log.info("dummyShip:" + carrierShipment.getId());
+					// Hier soll er neue shipments hinzufügen, aber packt das nur in die alten
+					CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId() + "_" + i, CarrierShipment.class), carrierShipment.getFrom(), carrierShipment.getTo(), (int) Boundary_value)
+							//CarrierShipment newShipment = CarrierShipment.Builder.newInstance(carrierShipment.getId(), carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
 							.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
 							.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow()).setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
 							.setPickupServiceTime(carrierShipment.getPickupServiceTime())
 							.build();
 
 					log.info("Sehe ich das hier?");
-					CarrierUtils.addShipment(carrier, newShipment); //füge das neue Shipment hinzu
-					//carrier.getShipments().remove(carrierShipment); //und lösche das alte heraus
+					newShipments.add(newShipment);
+					carrier.getShipments().remove(carrierShipment); //und lösche das alte heraus TODO (KMT) Aber auch das versucht er dann mehrfach, wenn er innerhalb des shipments da mehrfach in die Schleife geht.
 				}
-			log.info("Wie oft gehen wir hier durch");
+				log.info("Wie oft gehen wir hier durch");
+			}
+			//Jetzt können die neuen Shipments hinzugefügt werden.
+			for (CarrierShipment shipmentToAdd : newShipments) {
+				CarrierUtils.addShipment(carrier, shipmentToAdd); //füge das neue Shipment hinzu
 			}
 		}
 
