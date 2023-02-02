@@ -65,12 +65,8 @@ public class RunFreightExample {
 
 		// freight settings
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightConfigGroup.class ) ;
-
-
 		freightConfigGroup.setCarriersFile( "singleCarrierFiveActivitiesWithoutRoutes_Shipments.xml");
-
 		freightConfigGroup.setCarriersVehicleTypesFile( "vehicleTypes.xml");
-
 
 		// load scenario (this is not loading the freight material):
 		Scenario scenario = ScenarioUtils.loadScenario( config );
@@ -86,24 +82,10 @@ public class RunFreightExample {
 		// Weil wir es unten ja "Demo-halber" verdoppeln, muss als das Fahrzeug wenigstens 20 Einheiten transportieren können.
 		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 20 );
 
-
-
-
-
-
-
-
-
-		
-
-
 		// What vehicle types do we have
 		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
-
 			log.info(vehicleType.getId()+": "+vehicleType.getCapacity().getOther());
 		}
-
-
 
 		// changing service demand capacity of existing services
 		/*for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
@@ -133,9 +115,8 @@ public class RunFreightExample {
 			}
 		}
 
-        
-
-
+		// Todo (KMT 2/2/23): Müsste das nicht auch in jedem Carrier unabhängig geschaut werden?
+		// Todo (KMT 2/2/23): Mittelfristig vermutlich sogar sowas wie: 1) Gehe je Carrier durch all vehTypes durch, sammle 2) die Größe ein, merke dir (die kleinste??) und bilde davon dann deinen Grenzwert...
 		double Boundary_value = FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().getOther();  // Wert der Kapazität der "light" vehicles speichern
 
 		/*for(var p : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
@@ -143,7 +124,9 @@ public class RunFreightExample {
 		}*/
 
 
-		// Test method to create new shipment Test.1
+		//Todo: (KMT 2/2/23): Hier de facto 2. for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values())  Schleife in Folge --> Zusammenfassen?
+		// Allgemein: Hier mal "aufräumen" ;)
+		//Test method to create new shipment Test.1
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 
 			LinkedList<CarrierShipment> newShipments = new LinkedList<>();  //Liste um die "neuen" Shipments temporär zu speichern, weil man sie nicht während des Iterierens hinzufügen kann.
@@ -160,12 +143,16 @@ public class RunFreightExample {
 			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
 
 				int rest = carrierShipment.getSize() % (int) Boundary_value; //TODO (KMT) Es muss am Ende auch noch ein Shipment mit dem Rest erstellt werden
+				//TODO: (KMT 2/2/23) Bist du dir sicher, dass hier dann eine abgerundete Zahl raus kommt? ((Ich bin es aus dem Kopf nicht)
+				// Oder kann passieren, dass er bei z.B. 9/5 dann 1.8 raus bekommt und es dann 2 wird? (was dann ja mit dem Rest (4) zu einer Nachfrage von 2*5+4=14 führen würde
 				int numShipments = carrierShipment.getSize() / (int) Boundary_value;  // number of new shipments to create
 
 
 				// create a shipment with the remaining shipment goods
 				if(numShipments != 0 & rest != 0) {
-					CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId() + "_0", CarrierShipment.class), carrierShipment.getFrom(), carrierShipment.getTo(), rest).setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
+					CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId() + "_0", CarrierShipment.class), //Todo (KMT): Können wir bitte bei 1 anfangen zu zählen. Ist intuitiver, wenn man später mal so schnell drauf schaut
+									carrierShipment.getFrom(), carrierShipment.getTo(), rest)
+							.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
 							.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
 							.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
 							.setPickupServiceTime(carrierShipment.getPickupServiceTime())
@@ -176,8 +163,9 @@ public class RunFreightExample {
 
 				//die neuen shipments werden erstellt
 				for(int i=1; i <= numShipments; i++) {
-
-						CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId()+"_"+i,CarrierShipment.class), carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
+						//Todo (kmt 2/2/23): Das ist nahezu identisch mit der newShipment-Erstellung direkt drüber -> Methode erstellen, die sich drum kümmert anstatt mal nahezu identischen Code zu haben.
+						CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId()+"_"+i,CarrierShipment.class),
+										carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
 								.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
 								.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
 								.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
@@ -210,17 +198,9 @@ public class RunFreightExample {
 				demandAfter = demandAfter + carrierShipment.getSize();
 			}
 
-			//TODO (KMT): Hier noch eine Absicherung rein, dass vorher und nachher die Nachfragemenge identisch ist.
-			//Gbl.assertIf(demandBefore == demandAfter); //Bitte noch die beiden Variablen mit "Leben" füllen.
 			Gbl.assertIf(demandBefore == demandAfter);
 
 		}
-
-
-
-
-
-
 
 
 		// output before jsprit run (not necessary)
