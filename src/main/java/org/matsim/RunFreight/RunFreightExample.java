@@ -80,7 +80,7 @@ public class RunFreightExample {
 		// how to set the capacity of the "light" vehicle type to "1":
 		//Ich habe die Kapazität mal auf 20 erhöht, weil er sonst einen Teil der Aufträge nicht fahren kann (Fzg-Kapazität war 5; Aufträge hatten aber auch Größe 7 und 10)
 		// Weil wir es unten ja "Demo-halber" verdoppeln, muss als das Fahrzeug wenigstens 20 Einheiten transportieren können.
-		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 20 );
+		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 25 );
 
 		// What vehicle types do we have
 		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
@@ -105,32 +105,31 @@ public class RunFreightExample {
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
 				int size = carrierShipment.getSize()*4;
-				CarrierShipment newShipment = CarrierShipment.Builder.newInstance(carrierShipment.getId(),carrierShipment.getFrom(),carrierShipment.getTo(),size)
-						.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
-						.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
-						.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
-						.setPickupServiceTime(carrierShipment.getPickupServiceTime())
-						.build();
+
+				CarrierShipment newShipment = CreateShipment(carrierShipment, 0, size);
 				CarrierUtils.addShipment(carrier,newShipment); //füge das neue Shipment hinzu
 			}
 		}
 
 		// Todo (KMT 2/2/23): Müsste das nicht auch in jedem Carrier unabhängig geschaut werden?
 		// Todo (KMT 2/2/23): Mittelfristig vermutlich sogar sowas wie: 1) Gehe je Carrier durch all vehTypes durch, sammle 2) die Größe ein, merke dir (die kleinste??) und bilde davon dann deinen Grenzwert...
-		double Boundary_value = FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().getOther();  // Wert der Kapazität der "light" vehicles speichern
-
-		/*for(var p : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
-			log.info("Gib mir die kapazität von vehicles: "+p.getCapacity().getOther());
-		}*/
+		// double Boundary_value = FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().getOther();  // Wert der Kapazität der "light" vehicles speichern
+		double Boundary_value = 1000.0;
+		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
+			if(vehicleType.getCapacity().getOther() < Boundary_value)
+			{
+							Boundary_value = vehicleType.getCapacity().getOther();
+			}
+		}
 
 
 		//Todo: (KMT 2/2/23): Hier de facto 2. for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values())  Schleife in Folge --> Zusammenfassen?
 		// Allgemein: Hier mal "aufräumen" ;)
-		//Test method to create new shipment Test.1
+		// method to create new shipments
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 
-			LinkedList<CarrierShipment> newShipments = new LinkedList<>();  //Liste um die "neuen" Shipments temporär zu speichern, weil man sie nicht während des Iterierens hinzufügen kann.
-			LinkedList<CarrierShipment> oldShipments = new LinkedList<>(); //Liste um die "alten" Shipments temporär zu speichern
+			LinkedList<CarrierShipment> newShipments = new LinkedList<>();  // Liste um die "neuen" Shipments temporär zu speichern, weil man sie nicht während des Iterierens hinzufügen kann.
+			LinkedList<CarrierShipment> oldShipments = new LinkedList<>(); // Liste um die "alten" Shipments temporär zu speichern
 			int demandBefore = 0;
 			int demandAfter = 0;
 
@@ -138,7 +137,6 @@ public class RunFreightExample {
 			for (CarrierShipment carrierShipment : carrier.getShipments().values()){
 				demandBefore = demandBefore + carrierShipment.getSize();
 			}
-			//log.info("gebe mir die Kapazität der ganzen shipments aus: "+demandBefore);
 
 			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
 
@@ -147,50 +145,39 @@ public class RunFreightExample {
 				// Oder kann passieren, dass er bei z.B. 9/5 dann 1.8 raus bekommt und es dann 2 wird? (was dann ja mit dem Rest (4) zu einer Nachfrage von 2*5+4=14 führen würde
 				int numShipments = carrierShipment.getSize() / (int) Boundary_value;  // number of new shipments to create
 
-
 				// create a shipment with the remaining shipment goods
 				if(numShipments != 0 & rest != 0) {
-					CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId() + "_0", CarrierShipment.class), //Todo (KMT): Können wir bitte bei 1 anfangen zu zählen. Ist intuitiver, wenn man später mal so schnell drauf schaut
-									carrierShipment.getFrom(), carrierShipment.getTo(), rest)
-							.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
-							.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
-							.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
-							.setPickupServiceTime(carrierShipment.getPickupServiceTime())
-							.build();
-
-					newShipments.add(newShipment); //füge das neue Shipment hinzu
+					CarrierShipment newShipment = CreateShipment( carrierShipment,1,(int) rest);
+					newShipments.add(newShipment); // add the new shipment
 				}
 
-				//die neuen shipments werden erstellt
-				for(int i=1; i <= numShipments; i++) {
-						//Todo (kmt 2/2/23): Das ist nahezu identisch mit der newShipment-Erstellung direkt drüber -> Methode erstellen, die sich drum kümmert anstatt mal nahezu identischen Code zu haben.
-						CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId()+"_"+i,CarrierShipment.class),
-										carrierShipment.getFrom(), carrierShipment.getTo(),(int) Boundary_value)
-								.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
-								.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
-								.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
-								.setPickupServiceTime(carrierShipment.getPickupServiceTime())
-								.build();
-
-
-						newShipments.add(newShipment); //füge das neue Shipment hinzu
+				//the new shipments are created
+				if(rest != 0) {
+					for (int i = 1; i <= numShipments; i++) {
+						CarrierShipment newShipment = CreateShipment(carrierShipment,(i + 1), (int) Boundary_value);
+						newShipments.add(newShipment); // add the new shipment in the temporary LinkedList
+					}
 				}
-
+				else {
+					for (int i = 1; i <= numShipments; i++) {
+						CarrierShipment newShipment = CreateShipment(carrierShipment, i, (int) Boundary_value);
+						newShipments.add(newShipment); // add the new shipment in the temporary LinkedList
+					}
+				}
 
 				if(numShipments > 0){
 					oldShipments.add(carrierShipment);
 				}
-
 			}
 
-			//alte Shipments werden entfernt
+			// remove the old shipments
 			for (CarrierShipment shipmentToRemove : oldShipments) {
-				carrier.getShipments().remove(shipmentToRemove.getId(), shipmentToRemove); // lösche das alte shipment heraus
+				carrier.getShipments().remove(shipmentToRemove.getId(), shipmentToRemove);
 			}
 
-			// neuen Shipments werden hinzugefügt
+			// add the new shipments
 			for (CarrierShipment shipmentToAdd : newShipments) {
-				CarrierUtils.addShipment(carrier, shipmentToAdd); //füge das neue Shipment hinzu
+				CarrierUtils.addShipment(carrier, shipmentToAdd);
 			}
 
 			// counting shipment demand after
@@ -199,7 +186,6 @@ public class RunFreightExample {
 			}
 
 			Gbl.assertIf(demandBefore == demandAfter);
-
 		}
 
 
@@ -228,6 +214,33 @@ public class RunFreightExample {
 
 		// ## Start of the MATSim-Run: ##
 		controler.run();
+	}
+
+	// Erstellung eines neuen Shipments
+	public static CarrierShipment CreateShipment(CarrierShipment carrierShipment,  int id, int Shipment_size){
+			if(id == 0){
+				CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId(),CarrierShipment.class),
+								carrierShipment.getFrom(), carrierShipment.getTo(), Shipment_size)
+						.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
+						.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
+						.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
+						.setPickupServiceTime(carrierShipment.getPickupServiceTime())
+						.build();
+
+				return newShipment;
+			}
+			else {
+				CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId() + "_" + id, CarrierShipment.class),
+								carrierShipment.getFrom(), carrierShipment.getTo(), Shipment_size)
+						.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
+						.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
+						.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
+						.setPickupServiceTime(carrierShipment.getPickupServiceTime())
+						.build();
+
+				return newShipment;
+			}
+
 	}
 
 	// yyyy I think that having a central freight StrategyManager would be better than the current approach that builds an ad-hoc such
