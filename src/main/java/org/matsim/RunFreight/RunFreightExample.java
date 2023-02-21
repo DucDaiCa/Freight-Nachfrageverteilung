@@ -36,16 +36,10 @@ import org.matsim.examples.ExamplesUtils;
 import org.matsim.vehicles.VehicleCapacity;
 import org.matsim.vehicles.VehicleType;
 
-import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.Iterator;
 
 
-/**
- * @see org.matsim.contrib.freight
- */
 public class RunFreightExample {
 
 	private static final Logger log = LogManager.getLogger(RunFreightExample.class);
@@ -106,7 +100,7 @@ public class RunFreightExample {
 			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
 				int size = carrierShipment.getSize()*4;
 
-				CarrierShipment newShipment = CreateShipment(carrierShipment, 0, size);
+				CarrierShipment newShipment = createShipment(carrierShipment, 0, size);
 				CarrierUtils.addShipment(carrier,newShipment); //füge das neue Shipment hinzu
 			}
 		}
@@ -114,7 +108,7 @@ public class RunFreightExample {
 		// Todo (KMT 2/2/23): Müsste das nicht auch in jedem Carrier unabhängig geschaut werden?
 		// Todo (KMT 2/2/23): Mittelfristig vermutlich sogar sowas wie: 1) Gehe je Carrier durch all vehTypes durch, sammle 2) die Größe ein, merke dir (die kleinste??) und bilde davon dann deinen Grenzwert...
 		// double Boundary_value = FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().getOther();  // Wert der Kapazität der "light" vehicles speichern
-		double Boundary_value = 1000.0;
+		double Boundary_value = Double.MAX_VALUE;
 		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
 			if(vehicleType.getCapacity().getOther() < Boundary_value)
 			{
@@ -147,20 +141,20 @@ public class RunFreightExample {
 
 				// create a shipment with the remaining shipment goods
 				if(numShipments != 0 & rest != 0) {
-					CarrierShipment newShipment = CreateShipment( carrierShipment,1,(int) rest);
+					CarrierShipment newShipment = createShipment( carrierShipment,1,(int) rest);
 					newShipments.add(newShipment); // add the new shipment
 				}
 
 				//the new shipments are created
 				if(rest != 0) {
 					for (int i = 1; i <= numShipments; i++) {
-						CarrierShipment newShipment = CreateShipment(carrierShipment,(i + 1), (int) Boundary_value);
+						CarrierShipment newShipment = createShipment(carrierShipment,(i + 1), (int) Boundary_value);
 						newShipments.add(newShipment); // add the new shipment in the temporary LinkedList
 					}
 				}
 				else {
 					for (int i = 1; i <= numShipments; i++) {
-						CarrierShipment newShipment = CreateShipment(carrierShipment, i, (int) Boundary_value);
+						CarrierShipment newShipment = createShipment(carrierShipment, i, (int) Boundary_value);
 						newShipments.add(newShipment); // add the new shipment in the temporary LinkedList
 					}
 				}
@@ -217,7 +211,7 @@ public class RunFreightExample {
 	}
 
 	// Erstellung eines neuen Shipments
-	public static CarrierShipment CreateShipment(CarrierShipment carrierShipment,  int id, int Shipment_size){
+	public static CarrierShipment createShipment(CarrierShipment carrierShipment, int id, int Shipment_size){
 			if(id == 0){
 				CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId(),CarrierShipment.class),
 								carrierShipment.getFrom(), carrierShipment.getTo(), Shipment_size)
