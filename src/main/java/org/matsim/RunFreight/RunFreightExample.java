@@ -29,11 +29,9 @@ import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.gbl.Gbl;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.core.utils.io.IOUtils;
-import org.matsim.examples.ExamplesUtils;
-import org.matsim.vehicles.VehicleCapacity;
 import org.matsim.vehicles.VehicleType;
 
 import java.util.LinkedList;
@@ -48,19 +46,25 @@ public class RunFreightExample {
 
 		// ### config stuff: ###
 
-		Config config = ConfigUtils.loadConfig( IOUtils.extendUrl(ExamplesUtils.getTestScenarioURL( "freight-chessboard-9x9" ), "config.xml" ) );
 
-		config.plans().setInputFile( null ); // remove passenger input
+		Config config = ConfigUtils.createConfig();
+		//Config config = ConfigUtils.loadConfig( IOUtils.extendUrl(ExamplesUtils.getTestScenarioURL( "freight-chessboard-9x9" ), "config.xml" ) );
+		//config.plans().setInputFile( null ); // remove passenger input
+		config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
 
 		// more general settings
 		config.controler().setOutputDirectory("./output/freight" );
 
 		config.controler().setLastIteration(0 );		// yyyyyy iterations currently do not work; needs to be fixed.  (Internal discussion at end of file.)
 
+		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+
 		// freight settings
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightConfigGroup.class ) ;
-		freightConfigGroup.setCarriersFile( "singleCarrierFiveActivitiesWithoutRoutes_Shipments.xml");
-		freightConfigGroup.setCarriersVehicleTypesFile( "vehicleTypes.xml");
+		//freightConfigGroup.setCarriersFile( "singleCarrierFiveActivitiesWithoutRoutes_Shipments.xml");
+		freightConfigGroup.setCarriersFile( "input/dummyCarrier.xml");
+		//freightConfigGroup.setCarriersVehicleTypesFile( "vehicleTypes.xml");
+		freightConfigGroup.setCarriersVehicleTypesFile( "input/dummyVehicleTypes.xml");
 
 		// load scenario (this is not loading the freight material):
 		Scenario scenario = ScenarioUtils.loadScenario( config );
@@ -71,10 +75,8 @@ public class RunFreightExample {
 		// Write out the original carriers file - before any modification is done
 		new CarrierPlanXmlWriterV2(FreightUtils.getCarriers( scenario )).write( "output/originalCarriers.xml" ) ;
 
-		// how to set the capacity of the "light" vehicle type to "1":
-		//Ich habe die Kapazität mal auf 20 erhöht, weil er sonst einen Teil der Aufträge nicht fahren kann (Fzg-Kapazität war 5; Aufträge hatten aber auch Größe 7 und 10)
-		// Weil wir es unten ja "Demo-halber" verdoppeln, muss als das Fahrzeug wenigstens 20 Einheiten transportieren können.
-		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 25 );
+		// how to set the capacity of the "light" vehicle type to "25":
+		//FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 25 );
 
 		// What vehicle types do we have
 		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
@@ -97,17 +99,16 @@ public class RunFreightExample {
 
 		// changing shipment size of existing shipment
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
+			CarrierUtils.setJspritIterations(carrier,5);
 			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
-				int size = carrierShipment.getSize()*4;
+				int size = carrierShipment.getSize()*3;
 
 				CarrierShipment newShipment = createShipment(carrierShipment, 0, size);
-				CarrierUtils.addShipment(carrier,newShipment); //füge das neue Shipment hinzu
+				CarrierUtils.addShipment(carrier,newShipment); //add the new shipment to the carrier
 			}
 		}
 
-		// Todo (KMT 2/2/23): Müsste das nicht auch in jedem Carrier unabhängig geschaut werden?
-		// Todo (KMT 2/2/23): Mittelfristig vermutlich sogar sowas wie: 1) Gehe je Carrier durch all vehTypes durch, sammle 2) die Größe ein, merke dir (die kleinste??) und bilde davon dann deinen Grenzwert...
-		// double Boundary_value = FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().getOther();  // Wert der Kapazität der "light" vehicles speichern
+
 		double Boundary_value = Double.MAX_VALUE;
 		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
 			if(vehicleType.getCapacity().getOther() < Boundary_value)
@@ -115,10 +116,8 @@ public class RunFreightExample {
 							Boundary_value = vehicleType.getCapacity().getOther();
 			}
 		}
-
-
-		//Todo: (KMT 2/2/23): Hier de facto 2. for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values())  Schleife in Folge --> Zusammenfassen?
-		// Allgemein: Hier mal "aufräumen" ;)
+		//Boundary_value = Boundary_value/2;
+		
 		// method to create new shipments
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 
@@ -127,42 +126,10 @@ public class RunFreightExample {
 			int demandBefore = 0;
 			int demandAfter = 0;
 
-			// counting shipment demand before
-			for (CarrierShipment carrierShipment : carrier.getShipments().values()){
-				demandBefore = demandBefore + carrierShipment.getSize();
-			}
+			// counting shipment demand before (method)
+			demandBefore = Demand(carrier,demandBefore);
 
-			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
-
-				int rest = carrierShipment.getSize() % (int) Boundary_value; //TODO (KMT) Es muss am Ende auch noch ein Shipment mit dem Rest erstellt werden
-				//TODO: (KMT 2/2/23) Bist du dir sicher, dass hier dann eine abgerundete Zahl raus kommt? ((Ich bin es aus dem Kopf nicht)
-				// Oder kann passieren, dass er bei z.B. 9/5 dann 1.8 raus bekommt und es dann 2 wird? (was dann ja mit dem Rest (4) zu einer Nachfrage von 2*5+4=14 führen würde
-				int numShipments = carrierShipment.getSize() / (int) Boundary_value;  // number of new shipments to create
-
-				// create a shipment with the remaining shipment goods
-				if(numShipments != 0 & rest != 0) {
-					CarrierShipment newShipment = createShipment( carrierShipment,1,(int) rest);
-					newShipments.add(newShipment); // add the new shipment
-				}
-
-				//the new shipments are created
-				if(rest != 0) {
-					for (int i = 1; i <= numShipments; i++) {
-						CarrierShipment newShipment = createShipment(carrierShipment,(i + 1), (int) Boundary_value);
-						newShipments.add(newShipment); // add the new shipment in the temporary LinkedList
-					}
-				}
-				else {
-					for (int i = 1; i <= numShipments; i++) {
-						CarrierShipment newShipment = createShipment(carrierShipment, i, (int) Boundary_value);
-						newShipments.add(newShipment); // add the new shipment in the temporary LinkedList
-					}
-				}
-
-				if(numShipments > 0){
-					oldShipments.add(carrierShipment);
-				}
-			}
+			shipmentBuilder((int) Boundary_value, carrier, newShipments, oldShipments);
 
 			// remove the old shipments
 			for (CarrierShipment shipmentToRemove : oldShipments) {
@@ -175,9 +142,8 @@ public class RunFreightExample {
 			}
 
 			// counting shipment demand after
-			for (CarrierShipment carrierShipment : carrier.getShipments().values()){
-				demandAfter = demandAfter + carrierShipment.getSize();
-			}
+			demandAfter = Demand(carrier,demandAfter);
+
 
 			Gbl.assertIf(demandBefore == demandAfter);
 		}
@@ -210,8 +176,41 @@ public class RunFreightExample {
 		controler.run();
 	}
 
-	// Erstellung eines neuen Shipments
-	public static CarrierShipment createShipment(CarrierShipment carrierShipment, int id, int Shipment_size){
+	//method for building new shipments with the boundary size
+	private static void shipmentBuilder(int Boundary_value, Carrier carrier, LinkedList<CarrierShipment> newShipments, LinkedList<CarrierShipment> oldShipments) {
+		for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
+
+			int rest = carrierShipment.getSize() % Boundary_value;
+			int numShipments = carrierShipment.getSize() / Boundary_value;  // number of new shipments to create
+
+			// create a shipment with the remaining shipment goods
+			if(numShipments != 0 & rest != 0) {
+				CarrierShipment newShipment = createShipment( carrierShipment,1,(int) rest);
+				newShipments.add(newShipment); // add the new shipment
+			}
+
+			//the new shipments are created
+			if(rest != 0) {
+				for (int i = 1; i <= numShipments; i++) {
+					CarrierShipment newShipment = createShipment(carrierShipment,(i + 1), Boundary_value);
+					newShipments.add(newShipment); // add the new shipment in the temporary LinkedList
+				}
+			}
+			else {
+				for (int i = 1; i <= numShipments; i++) {
+					CarrierShipment newShipment = createShipment(carrierShipment, i, Boundary_value);
+					newShipments.add(newShipment); // add the new shipment in the temporary LinkedList
+				}
+			}
+
+			if(numShipments > 0){
+				oldShipments.add(carrierShipment);
+			}
+		}
+	}
+
+	//method for creating new Shipments
+	private static CarrierShipment createShipment(CarrierShipment carrierShipment, int id, int Shipment_size){
 			if(id == 0){
 				CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId(),CarrierShipment.class),
 								carrierShipment.getFrom(), carrierShipment.getTo(), Shipment_size)
@@ -236,6 +235,43 @@ public class RunFreightExample {
 			}
 
 	}
+
+	//method for counting Sizes of all Shipments
+	private static int Demand(Carrier carrier, int demand){
+
+		for (CarrierShipment carrierShipment : carrier.getShipments().values()){
+			demand = demand + carrierShipment.getSize();
+		}
+		return demand;
+	}
+
+	enum Random{
+		FRUEHLING(true),
+		SOMMER(true, 2014),
+		HERBST(false),
+		WINTER(false);
+
+		private final boolean sommerzeit;
+		public int normaleVariable = 0;
+
+		Random(boolean a)
+		{
+			this.sommerzeit = a;
+		}
+
+		Random(boolean a, int b)
+		{
+			this.sommerzeit = a;
+			this.normaleVariable = b;
+		}
+
+		public boolean isSommerzeit()
+		{
+			return this.sommerzeit;
+		}
+	}
+
+
 
 	// yyyy I think that having a central freight StrategyManager would be better than the current approach that builds an ad-hoc such
 	// strategy manager, with the strategies hardcoded there as well.  I currently see two approaches:
