@@ -21,7 +21,6 @@ package org.matsim.RunFreight;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.*;
 import org.matsim.contrib.freight.controler.CarrierModule;
@@ -67,7 +66,7 @@ public class RunFreightExample {
 		freightConfigGroup.setCarriersVehicleTypesFile( "input/dummyVehicleTypes.xml");
 
 		// load scenario (this is not loading the freight material):
-		Scenario scenario = ScenarioUtils.loadScenario( config );
+		org.matsim.api.core.v01.Scenario scenario = ScenarioUtils.loadScenario( config );
 
 		// load carriers according to freight config
 		FreightUtils.loadCarriersAccordingToFreightConfig( scenario );
@@ -108,14 +107,27 @@ public class RunFreightExample {
 			}
 		}
 
-
+		Scenario mySelection =  Scenario.SCENE_1;
 		double Boundary_value = Double.MAX_VALUE;
-		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
-			if(vehicleType.getCapacity().getOther() < Boundary_value)
-			{
+		switch (mySelection) {
+
+			case SCENE_1:
+				{
+					for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
+						if(vehicleType.getCapacity().getOther() < Boundary_value)
+						{
 							Boundary_value = vehicleType.getCapacity().getOther();
-			}
+						}
+					}
+				}
+				break;
+			case SCENE_2:
+
+				break;
+			default:
+				throw new IllegalStateException("Unexpected value: " + mySelection);
 		}
+
 		//Boundary_value = Boundary_value/2;
 
 		// method to create new shipments
@@ -129,7 +141,7 @@ public class RunFreightExample {
 			// counting shipment demand before (method)
 			demandBefore = Demand(carrier,demandBefore);
 
-			shipmentBuilder((int) Boundary_value, carrier, newShipments, oldShipments);
+			shipmentCreator((int) Boundary_value, carrier, newShipments, oldShipments);
 
 			// remove the old shipments
 			for (CarrierShipment shipmentToRemove : oldShipments) {
@@ -177,7 +189,7 @@ public class RunFreightExample {
 	}
 
 	//method for building new shipments with the boundary size
-	private static void shipmentBuilder(int Boundary_value, Carrier carrier, LinkedList<CarrierShipment> newShipments, LinkedList<CarrierShipment> oldShipments) {
+	private static void shipmentCreator(int Boundary_value, Carrier carrier, LinkedList<CarrierShipment> newShipments, LinkedList<CarrierShipment> oldShipments) {
 		for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
 
 			int rest = carrierShipment.getSize() % Boundary_value;
@@ -245,30 +257,11 @@ public class RunFreightExample {
 		return demand;
 	}
 
-	enum Random{
-		FRUEHLING(true),
-		SOMMER(true, 2014),
-		HERBST(false),
-		WINTER(false);
-
-		private final boolean sommerzeit;
-		public int normaleVariable = 0;
-
-		Random(boolean a)
-		{
-			this.sommerzeit = a;
-		}
-
-		Random(boolean a, int b)
-		{
-			this.sommerzeit = a;
-			this.normaleVariable = b;
-		}
-
-		public boolean isSommerzeit()
-		{
-			return this.sommerzeit;
-		}
+	enum Scenario{
+		SCENE_1,
+		SCENE_2,
+		SCENE_3,
+		SCENE_4
 	}
 
 
