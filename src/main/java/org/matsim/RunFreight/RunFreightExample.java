@@ -117,7 +117,7 @@ public class RunFreightExample {
 			}
 		}
 		//Boundary_value = Boundary_value/2;
-		
+
 		// method to create new shipments
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 
