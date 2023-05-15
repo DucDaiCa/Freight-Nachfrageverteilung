@@ -22,7 +22,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.contrib.freight.FreightConfigGroup;
-import org.matsim.contrib.freight.carrier.*;
+import org.matsim.contrib.freight.carrier.Carrier;
+import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
+import org.matsim.contrib.freight.carrier.CarrierShipment;
+import org.matsim.contrib.freight.carrier.CarrierUtils;
 import org.matsim.contrib.freight.controler.CarrierModule;
 import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
@@ -42,9 +45,8 @@ public class RunFreightExample {
 	private static final Logger log = LogManager.getLogger(RunFreightExample.class);
 
 	public static void main(String[] args) throws ExecutionException, InterruptedException{
-
+		long before = System.nanoTime();
 		// ### config stuff: ###
-
 
 		Config config = ConfigUtils.createConfig();
 		//Config config = ConfigUtils.loadConfig( IOUtils.extendUrl(ExamplesUtils.getTestScenarioURL( "freight-chessboard-9x9" ), "config.xml" ) );
@@ -120,6 +122,7 @@ public class RunFreightExample {
 						}
 					}
 				}
+				//Boundary_value = Boundary_value/2;
 				break;
 			case SCENE_2:
 
@@ -165,6 +168,7 @@ public class RunFreightExample {
 		new CarrierPlanXmlWriterV2(FreightUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;
 		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
 
+
 		// Solving the VRP (generate carrier's tour plans)
 		FreightUtils.runJsprit( scenario );
 
@@ -184,9 +188,18 @@ public class RunFreightExample {
 //		config.qsim().setSnapshotStyle( QSimConfigGroup.SnapshotStyle.kinematicWaves );
 //		controler.addOverridingModule( new OTFVisLiveModule() );
 
+
 		// ## Start of the MATSim-Run: ##
 		controler.run();
+
+		long after = System.nanoTime();
+		double durationMS = (after-before)/1e9;
+		System.out.println("Zeit: "+durationMS+" ms");
+
+		//RunFreightAnalysisEventbased Run = new RunFreightAnalysisEventbased("output/freight","analyze");
+
 	}
+
 
 	//method for building new shipments with the boundary size
 	private static void shipmentCreator(int Boundary_value, Carrier carrier, LinkedList<CarrierShipment> newShipments, LinkedList<CarrierShipment> oldShipments) {
