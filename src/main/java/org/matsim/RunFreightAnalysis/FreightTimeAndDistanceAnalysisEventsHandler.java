@@ -9,6 +9,7 @@ import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.Tour;
 
+import org.matsim.contrib.freight.controler.FreightUtils;
 import org.matsim.contrib.freight.events.FreightTourEndEvent;
 import org.matsim.contrib.freight.events.FreightTourStartEvent;
 import org.matsim.core.events.handler.BasicEventHandler;

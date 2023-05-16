@@ -22,12 +22,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.contrib.freight.FreightConfigGroup;
-import org.matsim.contrib.freight.carrier.Carrier;
-import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
-import org.matsim.contrib.freight.carrier.CarrierShipment;
-import org.matsim.contrib.freight.carrier.CarrierUtils;
+import org.matsim.contrib.freight.carrier.*;
 import org.matsim.contrib.freight.controler.CarrierModule;
-import org.matsim.contrib.freight.utils.FreightUtils;
+import org.matsim.contrib.freight.controler.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
@@ -74,7 +71,7 @@ public class RunFreightExample {
 		FreightUtils.loadCarriersAccordingToFreightConfig( scenario );
 
 		// Write out the original carriers file - before any modification is done
-		new CarrierPlanXmlWriterV2(FreightUtils.getCarriers( scenario )).write( "output/originalCarriers.xml" ) ;
+		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/originalCarriers.xml" ) ;
 
 		// how to set the capacity of the "light" vehicle type to "25":
 		//FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 25 );
@@ -112,7 +109,6 @@ public class RunFreightExample {
 		Scenario mySelection =  Scenario.SCENE_1;
 		double Boundary_value = Double.MAX_VALUE;
 		switch (mySelection) {
-
 			case SCENE_1:
 				{
 					for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
@@ -165,7 +161,7 @@ public class RunFreightExample {
 
 
 		// output before jsprit run (not necessary)
-		new CarrierPlanXmlWriterV2(FreightUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;
+		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;
 		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
 
 
@@ -173,7 +169,7 @@ public class RunFreightExample {
 		FreightUtils.runJsprit( scenario );
 
 		// Output after jsprit run (not necessary)
-		new CarrierPlanXmlWriterV2(FreightUtils.getCarriers( scenario )).write( "output/jsprit_plannedCarriers.xml" ) ;
+		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_plannedCarriers.xml" ) ;
 		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
 
 		// ## MATSim configuration:  ##
@@ -210,7 +206,7 @@ public class RunFreightExample {
 
 			// create a shipment with the remaining shipment goods
 			if(numShipments != 0 & rest != 0) {
-				CarrierShipment newShipment = createShipment( carrierShipment,1,(int) rest);
+				CarrierShipment newShipment = createShipment( carrierShipment,1, rest);
 				newShipments.add(newShipment); // add the new shipment
 			}
 
@@ -237,26 +233,22 @@ public class RunFreightExample {
 	//method for creating new Shipments
 	private static CarrierShipment createShipment(CarrierShipment carrierShipment, int id, int Shipment_size){
 			if(id == 0){
-				CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId(),CarrierShipment.class),
+				return CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId(),CarrierShipment.class),
 								carrierShipment.getFrom(), carrierShipment.getTo(), Shipment_size)
 						.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
 						.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
 						.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
 						.setPickupServiceTime(carrierShipment.getPickupServiceTime())
 						.build();
-
-				return newShipment;
 			}
 			else {
-				CarrierShipment newShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId() + "_" + id, CarrierShipment.class),
+				return CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId() + "_" + id, CarrierShipment.class),
 								carrierShipment.getFrom(), carrierShipment.getTo(), Shipment_size)
 						.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
 						.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
 						.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
 						.setPickupServiceTime(carrierShipment.getPickupServiceTime())
 						.build();
-
-				return newShipment;
 			}
 
 	}
