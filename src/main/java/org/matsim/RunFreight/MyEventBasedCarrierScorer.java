@@ -15,11 +15,11 @@ import org.matsim.contrib.freight.events.FreightTourEndEvent;
 import org.matsim.contrib.freight.events.FreightTourStartEvent;
 import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.scoring.SumScoringFunction;
-import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Kai Martins-Turner (kturner)
@@ -66,7 +66,7 @@ class MyEventBasedCarrierScorer implements CarrierScoringFunctionFactory {
 		}
 
 		@Override public void handleEvent(Event event) {
-			log.warn(event.toString());
+			log.debug(event.toString());
 			if (event instanceof FreightTourStartEvent freightTourStartEvent) {
 				handleEvent(freightTourStartEvent);
 			} else if (event instanceof FreightTourEndEvent freightTourEndEvent) {
