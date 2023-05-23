@@ -105,7 +105,7 @@ public class RunFreightExample {
 		double durationMS = (after-before)/1e9;
 		System.out.println("Zeit: "+durationMS+" ms");
 
-		RunFreightAnalysisEventbased FreightAnalysis = new RunFreightAnalysisEventbased("output/freight","analyze");
+		RunFreightAnalysisEventbased FreightAnalysis = new RunFreightAnalysisEventbased(controler.getControlerIO().getOutputPath(),controler.getControlerIO().getOutputPath()+"/analyze");
 		try {
 			FreightAnalysis.runAnalysis();
 		} catch (IOException e) {

@@ -66,7 +66,12 @@ public class RunFreightAnalysisEventbased {
      * @param analysisOutputPath The directory where the result of the analysis should go to
      */
     public RunFreightAnalysisEventbased(String simOutputPath, String analysisOutputPath) {
-        this.SIM_OUTPUT_PATH = simOutputPath;
+        if (!simOutputPath.endsWith("/")) {
+            this.SIM_OUTPUT_PATH = simOutputPath + "/";
+        } else {
+            this.SIM_OUTPUT_PATH = simOutputPath;
+        }
+
         this.ANALYSIS_OUTPUT_PATH = analysisOutputPath;
     }
 
