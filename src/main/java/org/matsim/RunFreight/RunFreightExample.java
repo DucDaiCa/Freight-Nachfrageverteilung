@@ -24,9 +24,11 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.*;
 import org.matsim.contrib.freight.controler.CarrierModule;
+import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
 import org.matsim.contrib.freight.controler.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.gbl.Gbl;
@@ -44,25 +46,7 @@ public class RunFreightExample {
 	public static void main(String[] args) throws ExecutionException, InterruptedException{
 		long before = System.nanoTime();
 		// ### config stuff: ###
-
-		Config config = ConfigUtils.createConfig();
-		//Config config = ConfigUtils.loadConfig( IOUtils.extendUrl(ExamplesUtils.getTestScenarioURL( "freight-chessboard-9x9" ), "config.xml" ) );
-		//config.plans().setInputFile( null ); // remove passenger input
-		config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
-
-		// more general settings
-		config.controler().setOutputDirectory("./output/freight" );
-
-		config.controler().setLastIteration(0 );		// yyyyyy iterations currently do not work; needs to be fixed.  (Internal discussion at end of file.)
-
-		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-
-		// freight settings
-		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightConfigGroup.class ) ;
-		//freightConfigGroup.setCarriersFile( "singleCarrierFiveActivitiesWithoutRoutes_Shipments.xml");
-		freightConfigGroup.setCarriersFile( "input/dummyCarrier.xml");
-		//freightConfigGroup.setCarriersVehicleTypesFile( "vehicleTypes.xml");
-		freightConfigGroup.setCarriersVehicleTypesFile( "input/dummyVehicleTypes.xml");
+		Config config = createConfig();
 
 		// load scenario (this is not loading the freight material):
 		org.matsim.api.core.v01.Scenario scenario = ScenarioUtils.loadScenario( config );
@@ -81,20 +65,71 @@ public class RunFreightExample {
 			log.info(vehicleType.getId()+": "+vehicleType.getCapacity().getOther());
 		}
 
-		// changing service demand capacity of existing services
-		/*for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
-			for (org.matsim.contrib.freight.carrier.CarrierService carrierService: carrier.getServices().values() ){
-				int demand = carrierService.getCapacityDemand()*6;
-				CarrierService newService = CarrierService.Builder.newInstance(carrierService.getId(),carrierService.getLocationLinkId())
-						.setCapacityDemand(demand)
-						.setServiceDuration(carrierService.getServiceDuration())
-						.setServiceStartTimeWindow(carrierService.getServiceStartTimeWindow())
-						.build();
-				CarrierUtils.addService(carrier,newService);
-			}
-		}*/
+
+		//Hier geschieht der Hauptteil der Arbeit: Das Aufteilen der Shipments :)
+		changeShipmentSize(scenario);
 
 
+		// output before jsprit run (not necessary)
+		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;
+		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
+
+
+		// Solving the VRP (generate carrier's tour plans)
+		FreightUtils.runJsprit( scenario );
+
+		// Output after jsprit run (not necessary)
+		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_plannedCarriers.xml" ) ;
+		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
+
+		// ## MATSim configuration:  ##
+		final Controler controler = new Controler( scenario ) ;
+		controler.addOverridingModule(new CarrierModule() );
+		controler.addOverridingModule(new AbstractModule() {
+										  @Override
+										  public void install() {
+											  final MyEventBasedCarrierScorer carrierScorer = new MyEventBasedCarrierScorer();
+
+											  bind(CarrierScoringFunctionFactory.class).toInstance(carrierScorer);
+										  }
+									  });
+
+
+
+		// ## Start of the MATSim-Run: ##
+		controler.run();
+
+		long after = System.nanoTime();
+		double durationMS = (after-before)/1e9;
+		System.out.println("Zeit: "+durationMS+" ms");
+
+		//RunFreightAnalysisEventbased Run = new RunFreightAnalysisEventbased("output/freight","analyze");
+
+	}
+
+	private static Config createConfig() {
+		Config config = ConfigUtils.createConfig();
+		//Config config = ConfigUtils.loadConfig( IOUtils.extendUrl(ExamplesUtils.getTestScenarioURL( "freight-chessboard-9x9" ), "config.xml" ) );
+		//config.plans().setInputFile( null ); // remove passenger input
+		config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
+
+		// more general settings
+		config.controler().setOutputDirectory("./output/freight" );
+
+		config.controler().setLastIteration(0 );		// yyyyyy iterations currently do not work; needs to be fixed.  (Internal discussion at end of file.)
+
+		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+
+		// freight settings
+		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightConfigGroup.class ) ;
+		//freightConfigGroup.setCarriersFile( "singleCarrierFiveActivitiesWithoutRoutes_Shipments.xml");
+		freightConfigGroup.setCarriersFile( "input/dummyCarrier.xml");
+		//freightConfigGroup.setCarriersVehicleTypesFile( "vehicleTypes.xml");
+		freightConfigGroup.setCarriersVehicleTypesFile( "input/dummyVehicleTypes.xml");
+		return config;
+	}
+
+	private static void changeShipmentSize(org.matsim.api.core.v01.Scenario scenario) {
 		// changing shipment size of existing shipment
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			CarrierUtils.setJspritIterations(carrier,5);
@@ -158,42 +193,6 @@ public class RunFreightExample {
 
 			Gbl.assertIf(demandBefore == demandAfter);
 		}
-
-
-		// output before jsprit run (not necessary)
-		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;
-		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
-
-
-		// Solving the VRP (generate carrier's tour plans)
-		FreightUtils.runJsprit( scenario );
-
-		// Output after jsprit run (not necessary)
-		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_plannedCarriers.xml" ) ;
-		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
-
-		// ## MATSim configuration:  ##
-		final Controler controler = new Controler( scenario ) ;
-		controler.addOverridingModule(new CarrierModule() );
-
-		// otfvis (if you want to use):
-//		OTFVisConfigGroup otfVisConfigGroup = ConfigUtils.addOrGetModule( config, OTFVisConfigGroup.class );
-//		otfVisConfigGroup.setLinkWidth( 10 );
-//		otfVisConfigGroup.setDrawNonMovingItems( false );
-//		config.qsim().setTrafficDynamics( QSimConfigGroup.TrafficDynamics.kinematicWaves );
-//		config.qsim().setSnapshotStyle( QSimConfigGroup.SnapshotStyle.kinematicWaves );
-//		controler.addOverridingModule( new OTFVisLiveModule() );
-
-
-		// ## Start of the MATSim-Run: ##
-		controler.run();
-
-		long after = System.nanoTime();
-		double durationMS = (after-before)/1e9;
-		System.out.println("Zeit: "+durationMS+" ms");
-
-		//RunFreightAnalysisEventbased Run = new RunFreightAnalysisEventbased("output/freight","analyze");
-
 	}
 
 
