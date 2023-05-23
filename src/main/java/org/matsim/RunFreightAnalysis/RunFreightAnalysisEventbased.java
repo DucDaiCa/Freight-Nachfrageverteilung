@@ -35,10 +35,6 @@ import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.scenario.ScenarioUtils;
 
-
-
-import org.matsim.contrib.freight.controler.*;
-
 import java.io.File;
 import java.io.IOException;
 

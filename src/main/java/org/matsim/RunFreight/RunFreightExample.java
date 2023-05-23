@@ -45,7 +45,7 @@ public class RunFreightExample {
 
 	private static final Logger log = LogManager.getLogger(RunFreightExample.class);
 
-	public static void main(String[] args) throws ExecutionException, InterruptedException{
+	public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
 		long before = System.nanoTime();
 		// ### config stuff: ###
 		Config config = createConfig();
@@ -160,11 +160,30 @@ public class RunFreightExample {
 						}
 					}
 				}
-				//Boundary_value = Boundary_value/2;
-				break;
-			case SCENE_2:
 
 				break;
+			case SCENE_2:
+			{
+				for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
+					if(vehicleType.getCapacity().getOther() < Boundary_value)
+					{
+						Boundary_value = vehicleType.getCapacity().getOther();
+					}
+				}
+				Boundary_value = Boundary_value/2;
+			}
+			break;
+			case SCENE_3:
+			{
+				for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
+					if(vehicleType.getCapacity().getOther() < Boundary_value)
+					{
+						Boundary_value = vehicleType.getCapacity().getOther();
+					}
+				}
+				Boundary_value = Boundary_value/3;
+			}
+			break;
 			default:
 				throw new IllegalStateException("Unexpected value: " + mySelection);
 		}
@@ -202,8 +221,14 @@ public class RunFreightExample {
 		}
 	}
 
-
-	//method for building new shipments with the boundary size
+	/**
+	 * method for building new shipment with the new size
+	 *
+	 * @param Boundary_value the "new" size for the shipments
+	 * @param carrier the already existing carrier
+	 * @param newShipments the temporary list for the new Shipments
+	 * @param oldShipments the temporary list for the old Shipments
+	 */
 	private static void shipmentCreator(int Boundary_value, Carrier carrier, LinkedList<CarrierShipment> newShipments, LinkedList<CarrierShipment> oldShipments) {
 		for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
 
@@ -236,11 +261,18 @@ public class RunFreightExample {
 		}
 	}
 
-	//method for creating new Shipments
-	private static CarrierShipment createShipment(CarrierShipment carrierShipment, int id, int Shipment_size){
+	/**
+	 * method for creating new Shipments
+	 *
+	 * @param carrierShipment the shipment
+	 * @param id id of the shipment
+	 * @param shipmentSize new size for the shipment
+	 * @return  the new/modified CarrierShipment
+	 */
+	private static CarrierShipment createShipment(CarrierShipment carrierShipment, int id, int shipmentSize){
 			if(id == 0){
 				return CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId(),CarrierShipment.class),
-								carrierShipment.getFrom(), carrierShipment.getTo(), Shipment_size)
+								carrierShipment.getFrom(), carrierShipment.getTo(), shipmentSize)
 						.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
 						.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
 						.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
@@ -249,7 +281,7 @@ public class RunFreightExample {
 			}
 			else {
 				return CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId() + "_" + id, CarrierShipment.class),
-								carrierShipment.getFrom(), carrierShipment.getTo(), Shipment_size)
+								carrierShipment.getFrom(), carrierShipment.getTo(), shipmentSize)
 						.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
 						.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
 						.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
@@ -259,7 +291,13 @@ public class RunFreightExample {
 
 	}
 
-	//method for counting Sizes of all Shipments
+	/**
+	 * method for counting sizes/demand of all Shipments
+	 *
+	 * @param carrier the already existing carrier
+	 * @param demand counter to sum up all shipments
+	 * @return the sum of the whole shipments
+	 */
 	private static int Demand(Carrier carrier, int demand){
 
 		for (CarrierShipment carrierShipment : carrier.getShipments().values()){
