@@ -20,6 +20,7 @@ package org.matsim.RunFreight;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.RunFreightAnalysis.RunFreightAnalysisEventbased;
 import org.matsim.api.core.v01.Id;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.*;
@@ -35,6 +36,7 @@ import org.matsim.core.gbl.Gbl;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.vehicles.VehicleType;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutionException;
 
@@ -103,7 +105,12 @@ public class RunFreightExample {
 		double durationMS = (after-before)/1e9;
 		System.out.println("Zeit: "+durationMS+" ms");
 
-		//RunFreightAnalysisEventbased Run = new RunFreightAnalysisEventbased("output/freight","analyze");
+		RunFreightAnalysisEventbased FreightAnalysis = new RunFreightAnalysisEventbased("output/freight","analyze");
+		try {
+			FreightAnalysis.runAnalysis();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 
 	}
 
