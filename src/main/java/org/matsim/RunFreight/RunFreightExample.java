@@ -46,7 +46,7 @@ public class RunFreightExample {
 	private static final Logger log = LogManager.getLogger(RunFreightExample.class);
 
 	public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
-		long before = System.nanoTime();
+		long start = System.nanoTime();
 		// ### config stuff: ###
 		Config config = createConfig();
 
@@ -101,8 +101,8 @@ public class RunFreightExample {
 		// ## Start of the MATSim-Run: ##
 		controler.run();
 
-		long after = System.nanoTime();
-		double durationMS = (after-before)/1e9;
+		long end = System.nanoTime();
+		double durationMS = (end-start)/1e9;
 		System.out.println("Zeit: "+durationMS+" ms");
 
 		RunFreightAnalysisEventbased FreightAnalysis = new RunFreightAnalysisEventbased(controler.getControlerIO().getOutputPath(),controler.getControlerIO().getOutputPath()+"/analyze");
@@ -137,6 +137,7 @@ public class RunFreightExample {
 	}
 
 	private static void changeShipmentSize(org.matsim.api.core.v01.Scenario scenario) {
+
 		// changing shipment size of existing shipment
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			CarrierUtils.setJspritIterations(carrier,5);
@@ -148,20 +149,21 @@ public class RunFreightExample {
 			}
 		}
 
-		Scenario mySelection =  Scenario.SCENE_1;
+		Scenario mySelection =  Scenario.SCENE_4;
 		double Boundary_value = Double.MAX_VALUE;
+
 		switch (mySelection) {
 			case SCENE_1:
-				{
-					for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
-						if(vehicleType.getCapacity().getOther() < Boundary_value)
-						{
-							Boundary_value = vehicleType.getCapacity().getOther();
-						}
+			{
+				for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
+					if(vehicleType.getCapacity().getOther() < Boundary_value)
+					{
+						Boundary_value = vehicleType.getCapacity().getOther();
 					}
 				}
+			}
 
-				break;
+			break;
 			case SCENE_2:
 			{
 				for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
@@ -184,11 +186,32 @@ public class RunFreightExample {
 				Boundary_value = Boundary_value/3;
 			}
 			break;
+			case SCENE_4:
+			{
+				double smallestSize = Double.MAX_VALUE;
+				double secsmallestSize = Double.MAX_VALUE;
+
+				for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
+					if(vehicleType.getCapacity().getOther() < smallestSize) {
+						if (smallestSize < secsmallestSize) {
+							secsmallestSize = smallestSize;
+						}
+						smallestSize = vehicleType.getCapacity().getOther();
+					}
+					else {
+						if (vehicleType.getCapacity().getOther() < secsmallestSize) {
+							secsmallestSize = vehicleType.getCapacity().getOther();
+						}
+					}
+
+				}
+				//log.info("Haloooooo "+ smallestSize+" "+secsmallestSize);
+				Boundary_value = (smallestSize+secsmallestSize)/2;
+				break;
+			}
 			default:
 				throw new IllegalStateException("Unexpected value: " + mySelection);
 		}
-
-		//Boundary_value = Boundary_value/2;
 
 		// method to create new shipments
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {

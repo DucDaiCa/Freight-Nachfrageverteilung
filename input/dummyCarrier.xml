@@ -6,6 +6,7 @@
     <vehicles>
         <vehicle id="heavy26t_59933" depotLinkId="59933" typeId="heavy26t" earliestStart="09:00:00" latestEnd="19:00:00"/>
         <vehicle id="heavy40t_59933" depotLinkId="59933" typeId="heavy40t" earliestStart="09:00:00" latestEnd="19:00:00"/>
+<!--        <vehicle id="heavy40t_59933" depotLinkId="59933" typeId="ultraheavy40t" earliestStart="09:00:00" latestEnd="19:00:00"/>-->
     </vehicles>
 </capabilities>
 <shipments>
