@@ -141,52 +141,41 @@ public class RunFreightExample {
 		// changing shipment size of existing shipment
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			CarrierUtils.setJspritIterations(carrier,5);
-			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
+			/*for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
 				int size = carrierShipment.getSize()*3;
 
 				CarrierShipment newShipment = createShipment(carrierShipment, 0, size);
 				CarrierUtils.addShipment(carrier,newShipment); //add the new shipment to the carrier
+			}*/
+		}
+
+		Plot mySelection =  Plot.OneHalfOfSmallestSize;
+		double Boundary_value = Double.MAX_VALUE;
+		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
+			if(vehicleType.getCapacity().getOther() < Boundary_value)
+			{
+				Boundary_value = vehicleType.getCapacity().getOther();
 			}
 		}
 
-		Scenario mySelection =  Scenario.SCENE_4;
-		double Boundary_value = Double.MAX_VALUE;
-
 		switch (mySelection) {
-			case SCENE_1:
+			case SmallestSize:
 			{
-				for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
-					if(vehicleType.getCapacity().getOther() < Boundary_value)
-					{
-						Boundary_value = vehicleType.getCapacity().getOther();
-					}
-				}
+				//size of the smallest vehicle to break up the shipment into smaller chunks
 			}
 
 			break;
-			case SCENE_2:
+			case OneHalfOfSmallestSize:
 			{
-				for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
-					if(vehicleType.getCapacity().getOther() < Boundary_value)
-					{
-						Boundary_value = vehicleType.getCapacity().getOther();
-					}
-				}
 				Boundary_value = Boundary_value/2;
 			}
 			break;
-			case SCENE_3:
+			case ThirdOfSmallestSize:
 			{
-				for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
-					if(vehicleType.getCapacity().getOther() < Boundary_value)
-					{
-						Boundary_value = vehicleType.getCapacity().getOther();
-					}
-				}
 				Boundary_value = Boundary_value/3;
 			}
 			break;
-			case SCENE_4:
+			case AverageOfTwoSmallestSize:
 			{
 				double smallestSize = Double.MAX_VALUE;
 				double secsmallestSize = Double.MAX_VALUE;
@@ -205,7 +194,7 @@ public class RunFreightExample {
 					}
 
 				}
-				//log.info("Haloooooo "+ smallestSize+" "+secsmallestSize);
+
 				Boundary_value = (smallestSize+secsmallestSize)/2;
 				break;
 			}
@@ -220,9 +209,16 @@ public class RunFreightExample {
 			LinkedList<CarrierShipment> oldShipments = new LinkedList<>(); // Liste um die "alten" Shipments temporär zu speichern
 			int demandBefore = 0;
 			int demandAfter = 0;
+			double deliveryServiceTimeBefore = 0.0;
+			double deliveryServiceTimeAfter = 0.0;
+			double pickupServiceTimeBefore = 0.0;
+			double pickupServiceTimeAfter = 0.0;
 
-			// counting shipment demand before (method)
+			// counting shipment demand, deliveryServiceTime, pickupServiceTime before making new shipments
 			demandBefore = Demand(carrier,demandBefore);
+			deliveryServiceTimeBefore = SumServiceTime(carrier,deliveryServiceTimeBefore,1);
+			pickupServiceTimeBefore= SumServiceTime(carrier,pickupServiceTimeBefore,2);
+
 
 			shipmentCreator((int) Boundary_value, carrier, newShipments, oldShipments);
 
@@ -236,11 +232,15 @@ public class RunFreightExample {
 				CarrierUtils.addShipment(carrier, shipmentToAdd);
 			}
 
-			// counting shipment demand after
+			// counting shipment demand, deliveryServiceTime, pickupServiceTime after making the new shipments
 			demandAfter = Demand(carrier,demandAfter);
+			deliveryServiceTimeAfter = SumServiceTime(carrier,deliveryServiceTimeAfter,1);
+			pickupServiceTimeAfter = SumServiceTime(carrier,pickupServiceTimeAfter,2);
 
-
+			// here checking if the numbers stayed the same
 			Gbl.assertIf(demandBefore == demandAfter);
+			Gbl.assertIf(deliveryServiceTimeBefore == deliveryServiceTimeAfter);
+			Gbl.assertIf(pickupServiceTimeBefore == pickupServiceTimeAfter);
 		}
 	}
 
@@ -296,19 +296,19 @@ public class RunFreightExample {
 			if(id == 0){
 				return CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId(),CarrierShipment.class),
 								carrierShipment.getFrom(), carrierShipment.getTo(), shipmentSize)
-						.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
+						.setDeliveryServiceTime((double) shipmentSize*180)
 						.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
 						.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
-						.setPickupServiceTime(carrierShipment.getPickupServiceTime())
+						.setPickupServiceTime((double) shipmentSize*180)
 						.build();
 			}
 			else {
 				return CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId() + "_" + id, CarrierShipment.class),
 								carrierShipment.getFrom(), carrierShipment.getTo(), shipmentSize)
-						.setDeliveryServiceTime(carrierShipment.getDeliveryServiceTime())
+						.setDeliveryServiceTime((double) shipmentSize*180)
 						.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
 						.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
-						.setPickupServiceTime(carrierShipment.getPickupServiceTime())
+						.setPickupServiceTime((double) shipmentSize*180)
 						.build();
 			}
 
@@ -329,11 +329,31 @@ public class RunFreightExample {
 		return demand;
 	}
 
-	enum Scenario{
-		SCENE_1,
-		SCENE_2,
-		SCENE_3,
-		SCENE_4
+	private static double SumServiceTime(Carrier carrier, double serviceTime, int num ){
+
+		switch(num) {
+			case 1:{
+				for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
+					serviceTime = serviceTime + carrierShipment.getDeliveryServiceTime();
+				}
+			}
+			break;
+			case 2:{
+				for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
+					serviceTime = serviceTime + carrierShipment.getPickupServiceTime();
+				}
+			}
+			break;
+		}
+
+		return serviceTime;
+	}
+
+	enum Plot {
+		SmallestSize,
+		OneHalfOfSmallestSize,
+		ThirdOfSmallestSize,
+		AverageOfTwoSmallestSize
 	}
 
 
