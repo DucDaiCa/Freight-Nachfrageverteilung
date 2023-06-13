@@ -105,6 +105,7 @@ public class RunFreightExample {
 		double durationMS = (end-start)/1e9;
 		System.out.println("Zeit: "+durationMS+" ms");
 
+		// Creating the Analysis files
 		RunFreightAnalysisEventbased FreightAnalysis = new RunFreightAnalysisEventbased(controler.getControlerIO().getOutputPath(),controler.getControlerIO().getOutputPath()+"/analyze");
 		try {
 			FreightAnalysis.runAnalysis();
@@ -116,8 +117,7 @@ public class RunFreightExample {
 
 	private static Config createConfig() {
 		Config config = ConfigUtils.createConfig();
-		//Config config = ConfigUtils.loadConfig( IOUtils.extendUrl(ExamplesUtils.getTestScenarioURL( "freight-chessboard-9x9" ), "config.xml" ) );
-		//config.plans().setInputFile( null ); // remove passenger input
+
 		config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
 
 		// more general settings
@@ -129,9 +129,9 @@ public class RunFreightExample {
 
 		// freight settings
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightConfigGroup.class ) ;
-		//freightConfigGroup.setCarriersFile( "singleCarrierFiveActivitiesWithoutRoutes_Shipments.xml");
+
 		freightConfigGroup.setCarriersFile( "input/dummyCarrier.xml");
-		//freightConfigGroup.setCarriersVehicleTypesFile( "vehicleTypes.xml");
+
 		freightConfigGroup.setCarriersVehicleTypesFile( "input/dummyVehicleTypes.xml");
 		return config;
 	}
@@ -149,7 +149,7 @@ public class RunFreightExample {
 			}*/
 		}
 
-		Plot mySelection =  Plot.OneHalfOfSmallestSize;
+		Plot mySelection =  Plot.SmallestSize;
 		double Boundary_value = Double.MAX_VALUE;
 		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
 			if(vehicleType.getCapacity().getOther() < Boundary_value)
@@ -165,7 +165,7 @@ public class RunFreightExample {
 			}
 
 			break;
-			case OneHalfOfSmallestSize:
+			case HalfOfSmallestSize:
 			{
 				Boundary_value = Boundary_value/2;
 			}
@@ -202,11 +202,12 @@ public class RunFreightExample {
 				throw new IllegalStateException("Unexpected value: " + mySelection);
 		}
 
-		// method to create new shipments
+		// method to create new shipments ( hier werden die Shipments aufgeteilt und neu erstellt )
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 
 			LinkedList<CarrierShipment> newShipments = new LinkedList<>();  // Liste um die "neuen" Shipments temporär zu speichern, weil man sie nicht während des Iterierens hinzufügen kann.
 			LinkedList<CarrierShipment> oldShipments = new LinkedList<>(); // Liste um die "alten" Shipments temporär zu speichern
+
 			int demandBefore = 0;
 			int demandAfter = 0;
 			double deliveryServiceTimeBefore = 0.0;
@@ -247,16 +248,16 @@ public class RunFreightExample {
 	/**
 	 * method for building new shipment with the new size
 	 *
-	 * @param Boundary_value the "new" size for the shipments
+	 * @param size the "new" size for the shipments
 	 * @param carrier the already existing carrier
 	 * @param newShipments the temporary list for the new Shipments
 	 * @param oldShipments the temporary list for the old Shipments
 	 */
-	private static void shipmentCreator(int Boundary_value, Carrier carrier, LinkedList<CarrierShipment> newShipments, LinkedList<CarrierShipment> oldShipments) {
+	private static void shipmentCreator(int size, Carrier carrier, LinkedList<CarrierShipment> newShipments, LinkedList<CarrierShipment> oldShipments) {
 		for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
 
-			int rest = carrierShipment.getSize() % Boundary_value;
-			int numShipments = carrierShipment.getSize() / Boundary_value;  // number of new shipments to create
+			int rest = carrierShipment.getSize() % size;
+			int numShipments = carrierShipment.getSize() / size;  // number of new shipments to create
 
 			// create a shipment with the remaining shipment goods
 			if(numShipments != 0 & rest != 0) {
@@ -267,13 +268,13 @@ public class RunFreightExample {
 			//the new shipments are created
 			if(rest != 0) {
 				for (int i = 1; i <= numShipments; i++) {
-					CarrierShipment newShipment = createShipment(carrierShipment,(i + 1), Boundary_value);
+					CarrierShipment newShipment = createShipment(carrierShipment,(i + 1), size);
 					newShipments.add(newShipment); // add the new shipment in the temporary LinkedList
 				}
 			}
 			else {
 				for (int i = 1; i <= numShipments; i++) {
-					CarrierShipment newShipment = createShipment(carrierShipment, i, Boundary_value);
+					CarrierShipment newShipment = createShipment(carrierShipment, i, size);
 					newShipments.add(newShipment); // add the new shipment in the temporary LinkedList
 				}
 			}
@@ -351,7 +352,7 @@ public class RunFreightExample {
 
 	enum Plot {
 		SmallestSize,
-		OneHalfOfSmallestSize,
+		HalfOfSmallestSize,
 		ThirdOfSmallestSize,
 		AverageOfTwoSmallestSize
 	}

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <vehicleDefinitions xmlns="http://www.matsim.org/files/dtd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.matsim.org/files/dtd http://www.matsim.org/files/dtd/vehicleDefinitions_v2.0.xsd">
-    <vehicleType id="heavy26t">
+
+   <!--<vehicleType id="heavy26t">
         <description>Heavy Vehicle 26t</description>
         <capacity seats="1" standingRoomInPersons="0" other="24.0"> </capacity>
         <length meter="7.5"/>
@@ -15,9 +16,9 @@
         <passengerCarEquivalents pce="1.0"/>
         <networkMode networkMode="car"/>
         <flowEfficiencyFactor factor="1.0"/>
-    </vehicleType>
+    </vehicleType>-->
 
-    <vehicleType id="heavy26t_frozen">
+   <!--<vehicleType id="heavy26t_frozen">
         <description>Heavy Vehicle 26t Frozen</description>
         <capacity seats="1" standingRoomInPersons="0" other="160.0"> </capacity>
         <length meter="7.5"/>
@@ -31,7 +32,7 @@
         <passengerCarEquivalents pce="1.0"/>
         <networkMode networkMode="car"/>
         <flowEfficiencyFactor factor="1.0"/>
-    </vehicleType>
+    </vehicleType>-->
 
     <vehicleType id="heavy40t">
         <description>Heavy Vehicle 40t</description>
@@ -49,7 +50,7 @@
         <flowEfficiencyFactor factor="1.0"/>
     </vehicleType>
 
-    <vehicleType id="light8t">
+   <!-- <vehicleType id="light8t">
         <description>Light Vehicle 7.5t</description>
         <capacity seats="1" standingRoomInPersons="0" other="10.0"> </capacity>
         <length meter="7.5"/>
@@ -64,7 +65,8 @@
         <networkMode networkMode="car"/>
         <flowEfficiencyFactor factor="1.0"/>
     </vehicleType>
-
+-->
+<!--
     <vehicleType id="light8t_frozen">
         <description>Light Vehicle 7.5t Frozen</description>
         <capacity seats="1" standingRoomInPersons="0" other="70.0"> </capacity>
@@ -80,6 +82,7 @@
         <networkMode networkMode="car"/>
         <flowEfficiencyFactor factor="1.0"/>
     </vehicleType>
+-->
 
     <vehicleType id="medium18t">
         <description>Medium Vehicle 18t</description>
