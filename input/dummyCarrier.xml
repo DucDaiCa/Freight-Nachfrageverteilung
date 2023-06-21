@@ -2,7 +2,7 @@
 
 <carriers>
 
-    <carrier id="kaiser_VERBRAUCHERMARKT_TROCKEN">
+  <!--<carrier id="kaiser_VERBRAUCHERMARKT_TROCKEN">
         <capabilities fleetSize="INFINITE">
             <vehicles>
                 <vehicle id="heavy40t_112414" depotLinkId="112414" typeId="heavy40t" earliestStart="09:00:00" latestEnd="19:00:00"/>
@@ -18,111 +18,7 @@
         </shipments>
         <services> </services>
     </carrier>
-
-    <!--<carrier id="kaufland_SBWARENHAUS_TROCKEN">
-        <capabilities fleetSize="INFINITE">
-            <vehicles>
-                <vehicle id="heavy40t_49046" depotLinkId="49046" typeId="heavy40t" earliestStart="09:00:00" latestEnd="19:00:00"/>
-                <vehicle id="medium18t_49046" depotLinkId="49046" typeId="medium18t" earliestStart="09:00:00" latestEnd="19:00:00"/>
-            </vehicles>
-        </capabilities>
-        <shipments>
-            <shipment id="10_kaufland" from="49046" to="66166" size="31" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:33:00" deliveryServiceTime="01:33:00"/>
-            <shipment id="11_kaufland" from="49046" to="35394" size="21" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:03:00" deliveryServiceTime="01:03:00"/>
-            <shipment id="13_kaufland_1" from="49046" to="119916" size="17" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:51:00" deliveryServiceTime="00:51:00"/>
-            <shipment id="13_kaufland_2" from="49046" to="119916" size="17" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:51:00" deliveryServiceTime="00:51:00"/>
-            <shipment id="18_kaufland" from="49046" to="103590" size="29" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:27:00" deliveryServiceTime="01:27:00"/>
-            <shipment id="22_kaufland" from="49046" to="157038" size="20" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:00:00" deliveryServiceTime="01:00:00"/>
-            <shipment id="24_kaufland" from="49046" to="37522" size="29" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:27:00" deliveryServiceTime="01:27:00"/>
-            <shipment id="28_kaufland" from="49046" to="117774" size="33" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:39:00" deliveryServiceTime="01:39:00"/>
-            <shipment id="2_kaufland" from="49046" to="122521" size="26" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:18:00" deliveryServiceTime="01:18:00"/>
-            <shipment id="31_kaufland" from="49046" to="78150" size="20" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:00:00" deliveryServiceTime="01:00:00"/>
-            <shipment id="32_kaufland_1" from="49046" to="153863" size="17" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:51:00" deliveryServiceTime="00:51:00"/>
-            <shipment id="32_kaufland_2" from="49046" to="153863" size="17" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:51:00" deliveryServiceTime="00:51:00"/>
-            <shipment id="3_kaufland" from="49046" to="11862" size="19" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:57:00" deliveryServiceTime="00:57:00"/>
-            <shipment id="4_kaufland" from="49046" to="111435" size="21" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:03:00" deliveryServiceTime="01:03:00"/>
-            <shipment id="9_kaufland" from="49046" to="117774" size="29" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:27:00" deliveryServiceTime="01:27:00"/>
-        </shipments>
-        <services> </services>
-    </carrier>-->
-
-<!--
-    <carrier id="rewe_DISCOUNTER_FRISCHE">
-        <capabilities fleetSize="INFINITE">
-            <vehicles>
-                <vehicle id="light8t_159381" depotLinkId="159381" typeId="light8t" earliestStart="09:00:00" latestEnd="19:00:00"/>
-                <vehicle id="heavy26t_159381" depotLinkId="159381" typeId="heavy26t" earliestStart="09:00:00" latestEnd="19:00:00"/>
-            </vehicles>
-        </capabilities>
-        <shipments>
-            <shipment id="10_rewe" from="159381" to="155096" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="11_rewe" from="159381" to="147358" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="12_rewe" from="159381" to="13160" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="13_rewe" from="159381" to="103054" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="14_rewe" from="159381" to="102805" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="15_rewe" from="159381" to="155354" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="16_rewe" from="159381" to="31540" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="17_rewe" from="159381" to="35119" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="18_rewe" from="159381" to="139779" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="19_rewe" from="159381" to="54863" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="1_rewe" from="159381" to="98190" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="20_rewe" from="159381" to="109908" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="21_rewe" from="159381" to="152263" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="22_rewe" from="159381" to="149726" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="23_rewe" from="159381" to="142041" size="4" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:12:00" deliveryServiceTime="00:12:00"/>
-            <shipment id="24_rewe" from="159381" to="63626" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="25_rewe" from="159381" to="107285" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="26_rewe" from="159381" to="14919" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="27_rewe" from="159381" to="28683" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="28_rewe" from="159381" to="78954" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="29_rewe" from="159381" to="54387" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="2_rewe" from="159381" to="11856" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="30_rewe" from="159381" to="60642" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="31_rewe" from="159381" to="77626" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="32_rewe" from="159381" to="37969" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="33_rewe" from="159381" to="114363" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="34_rewe" from="159381" to="149747" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="35_rewe" from="159381" to="155354" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="36_rewe" from="159381" to="11210" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="37_rewe" from="159381" to="27107" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="38_rewe" from="159381" to="88798" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="39_rewe" from="159381" to="154448" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="3_rewe" from="159381" to="11204" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="40_rewe" from="159381" to="152183" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="41_rewe" from="159381" to="60642" size="4" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:12:00" deliveryServiceTime="00:12:00"/>
-            <shipment id="42_rewe" from="159381" to="34454" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="43_rewe" from="159381" to="111831" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="44_rewe" from="159381" to="35044" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="45_rewe" from="159381" to="137118" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="46_rewe" from="159381" to="153719" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="47_rewe" from="159381" to="11862" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="48_rewe" from="159381" to="37091" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="49_rewe" from="159381" to="31429" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="4_rewe" from="159381" to="70210" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="50_rewe" from="159381" to="113185" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="51_rewe" from="159381" to="85314" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="52_rewe" from="159381" to="158722" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="53_rewe" from="159381" to="127694" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="54_rewe" from="159381" to="102147" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="55_rewe" from="159381" to="8059" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="56_rewe" from="159381" to="64463" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="57_rewe" from="159381" to="14556" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="58_rewe" from="159381" to="58115" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="59_rewe" from="159381" to="109318" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="5_rewe" from="159381" to="20883" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="60_rewe" from="159381" to="142086" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="61_rewe" from="159381" to="29278" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="62_rewe" from="159381" to="65017" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="63_rewe" from="159381" to="64261" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="64_rewe" from="159381" to="62225" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-            <shipment id="6_rewe" from="159381" to="100827" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="7_rewe" from="159381" to="152714" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
-            <shipment id="8_rewe" from="159381" to="71501" size="4" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:12:00" deliveryServiceTime="00:12:00"/>
-            <shipment id="9_rewe" from="159381" to="133365" size="3" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:09:00" deliveryServiceTime="00:09:00"/>
-        </shipments>
-        <services> </services>
-    </carrier>-->
-
+-->
    <!-- <carrier id="netto_SUPERMARKT_FRISCHE">
         <capabilities fleetSize="INFINITE">
             <vehicles>
@@ -179,5 +75,28 @@
         </shipments>
         <services> </services>
     </carrier>-->
+
+    <carrier id="real_SBWARENHAUS_TROCKEN">
+        <capabilities fleetSize="INFINITE">
+            <vehicles>
+                <vehicle id="heavy40t_63891" depotLinkId="63891" typeId="heavy40t" earliestStart="09:00:00" latestEnd="19:00:00"/>
+                <vehicle id="medium18t_63891" depotLinkId="63891" typeId="medium18t" earliestStart="09:00:00" latestEnd="19:00:00"/>
+            </vehicles>
+        </capabilities>
+        <shipments>
+            <shipment id="1_real" from="63891" to="28683" size="22" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:06:00" deliveryServiceTime="01:06:00"/>
+            <shipment id="2_real_1" from="63891" to="126482" size="17" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:51:00" deliveryServiceTime="00:51:00"/>
+            <shipment id="2_real_2" from="63891" to="126482" size="18" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:54:00" deliveryServiceTime="00:54:00"/>
+            <shipment id="3_real" from="63891" to="28683" size="24" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:12:00" deliveryServiceTime="01:12:00"/>
+            <shipment id="4_real_1" from="63891" to="155354" size="18" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:54:00" deliveryServiceTime="00:54:00"/>
+            <shipment id="4_real_2" from="63891" to="155354" size="19" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:57:00" deliveryServiceTime="00:57:00"/>
+            <shipment id="5_real_1" from="63891" to="5687" size="19" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:57:00" deliveryServiceTime="00:57:00"/>
+            <shipment id="5_real_2" from="63891" to="5687" size="18" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:54:00" deliveryServiceTime="00:54:00"/>
+            <shipment id="6_real" from="63891" to="20767" size="22" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:06:00" deliveryServiceTime="01:06:00"/>
+            <shipment id="7_real" from="63891" to="5359" size="31" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:33:00" deliveryServiceTime="01:33:00"/>
+        </shipments>
+        <services> </services>
+    </carrier>
+
 
 </carriers>

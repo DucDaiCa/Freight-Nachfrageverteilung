@@ -22,6 +22,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.RunFreightAnalysis.RunFreightAnalysisEventbased;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.*;
 import org.matsim.contrib.freight.controler.CarrierModule;
@@ -37,6 +38,8 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.vehicles.VehicleType;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutionException;
 
@@ -76,6 +79,7 @@ public class RunFreightExample {
 		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;
 		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
 
+		ShipmentSizeNumerator(scenario);
 
 		// Solving the VRP (generate carrier's tour plans)
 		FreightUtils.runJsprit( scenario );
@@ -103,7 +107,7 @@ public class RunFreightExample {
 
 		long end = System.nanoTime();
 		double durationMS = (end-start)/1e9;
-		System.out.println("Zeit: "+durationMS+" ms");
+		System.out.println("Zeit: "+durationMS+" s");
 
 		// Creating the Analysis files
 		RunFreightAnalysisEventbased FreightAnalysis = new RunFreightAnalysisEventbased(controler.getControlerIO().getOutputPath(),controler.getControlerIO().getOutputPath()+"/analyze");
@@ -113,6 +117,17 @@ public class RunFreightExample {
 			throw new RuntimeException(e);
 		}
 
+	}
+
+	private static void ShipmentSizeNumerator(Scenario scenario) {
+		LinkedList<Integer> shipmentSizes = new LinkedList<>();
+		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
+			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
+				shipmentSizes.add(carrierShipment.getSize());
+			}
+		}
+		Collections.sort(shipmentSizes);
+		log.info("Gib mir die size von demCarrier aus: "+shipmentSizes);
 	}
 
 	private static Config createConfig() {
@@ -139,6 +154,7 @@ public class RunFreightExample {
 	private static void changeShipmentSize(org.matsim.api.core.v01.Scenario scenario) {
 
 		// changing shipment size of existing shipment
+
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			CarrierUtils.setJspritIterations(carrier,5);
 			/*for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
@@ -146,8 +162,11 @@ public class RunFreightExample {
 
 				CarrierShipment newShipment = createShipment(carrierShipment, 0, size);
 				CarrierUtils.addShipment(carrier,newShipment); //add the new shipment to the carrier
+
+
 			}*/
 		}
+
 
 		Plot mySelection =  Plot.SmallestSize;
 		double Boundary_value = Double.MAX_VALUE;
@@ -175,34 +194,12 @@ public class RunFreightExample {
 				Boundary_value = Boundary_value/3;
 			}
 			break;
-			case AverageOfTwoSmallestSize:
-			{
-				double smallestSize = Double.MAX_VALUE;
-				double secsmallestSize = Double.MAX_VALUE;
-
-				for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
-					if(vehicleType.getCapacity().getOther() < smallestSize) {
-						if (smallestSize < secsmallestSize) {
-							secsmallestSize = smallestSize;
-						}
-						smallestSize = vehicleType.getCapacity().getOther();
-					}
-					else {
-						if (vehicleType.getCapacity().getOther() < secsmallestSize) {
-							secsmallestSize = vehicleType.getCapacity().getOther();
-						}
-					}
-
-				}
-
-				Boundary_value = (smallestSize+secsmallestSize)/2;
-				break;
-			}
 			default:
 				throw new IllegalStateException("Unexpected value: " + mySelection);
 		}
 
 		// method to create new shipments ( hier werden die Shipments aufgeteilt und neu erstellt )
+		 /*
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 
 			LinkedList<CarrierShipment> newShipments = new LinkedList<>();  // Liste um die "neuen" Shipments temporär zu speichern, weil man sie nicht während des Iterierens hinzufügen kann.
@@ -243,6 +240,7 @@ public class RunFreightExample {
 			Gbl.assertIf(deliveryServiceTimeBefore == deliveryServiceTimeAfter);
 			Gbl.assertIf(pickupServiceTimeBefore == pickupServiceTimeAfter);
 		}
+		 */
 	}
 
 	/**
@@ -330,6 +328,14 @@ public class RunFreightExample {
 		return demand;
 	}
 
+	/**
+	 * method for counting sizes/demand of all Shipments
+	 *
+	 * @param carrier the already existing carrier
+	 * @param serviceTime variable to sum up servicetime in the carrier
+	 * @param num variable to decide if sum up delivery or pickup service time
+	 * @return the sum of the whole shipments
+	 */
 	private static double SumServiceTime(Carrier carrier, double serviceTime, int num ){
 
 		switch(num) {
