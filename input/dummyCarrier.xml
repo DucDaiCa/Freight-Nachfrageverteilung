@@ -2,7 +2,7 @@
 
 <carriers>
 
-  <!--<carrier id="kaiser_VERBRAUCHERMARKT_TROCKEN">
+  <carrier id="kaiser_VERBRAUCHERMARKT_TROCKEN">
         <capabilities fleetSize="INFINITE">
             <vehicles>
                 <vehicle id="heavy40t_112414" depotLinkId="112414" typeId="heavy40t" earliestStart="09:00:00" latestEnd="19:00:00"/>
@@ -18,7 +18,7 @@
         </shipments>
         <services> </services>
     </carrier>
--->
+
    <!-- <carrier id="netto_SUPERMARKT_FRISCHE">
         <capabilities fleetSize="INFINITE">
             <vehicles>
@@ -76,7 +76,7 @@
         <services> </services>
     </carrier>-->
 
-    <carrier id="real_SBWARENHAUS_TROCKEN">
+   <!-- <carrier id="real_SBWARENHAUS_TROCKEN">
         <capabilities fleetSize="INFINITE">
             <vehicles>
                 <vehicle id="heavy40t_63891" depotLinkId="63891" typeId="heavy40t" earliestStart="09:00:00" latestEnd="19:00:00"/>
@@ -96,7 +96,7 @@
             <shipment id="7_real" from="63891" to="5359" size="31" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:33:00" deliveryServiceTime="01:33:00"/>
         </shipments>
         <services> </services>
-    </carrier>
+    </carrier>-->
 
 
 </carriers>
