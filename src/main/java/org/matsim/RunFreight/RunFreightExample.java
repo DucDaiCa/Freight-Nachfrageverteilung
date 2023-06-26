@@ -33,12 +33,10 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.gbl.Gbl;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.vehicles.VehicleType;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutionException;
@@ -48,16 +46,39 @@ public class RunFreightExample {
 
 	private static final Logger log = LogManager.getLogger(RunFreightExample.class);
 
+	private static int nuOfJspritIteration;
+
 	public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
-		long start = System.nanoTime();
+
+		for (String arg : args) {
+			log.info( arg );
+		}
+
+		if ( args.length==0 ) {
+			String inputPath = "./input/";
+			args = new String[] {
+					inputPath+"dummyCarrier.xml",
+					inputPath + "dummyVehicleTypes.xml",
+					"1",                                                    //only for demonstration.
+					"./output/Demo1It_small",
+			};
+		}
+
+		long start = System.nanoTime(); //TODO: Macht es Sinn, die Zeitmessung ab hier laufen zu lassen, wo ja noch die ganez Vorbereitung erfolgt?
 		// ### config stuff: ###
-		Config config = createConfig();
+		Config config = prepareConfig(args);
 
 		// load scenario (this is not loading the freight material):
 		org.matsim.api.core.v01.Scenario scenario = ScenarioUtils.loadScenario( config );
 
 		// load carriers according to freight config
 		FreightUtils.loadCarriersAccordingToFreightConfig( scenario );
+
+		//set # of jsprit iterations
+		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
+			log.warn("Overwriting the number of jsprit iterations for carrier: " + carrier.getId() + ". Value was before " +CarrierUtils.getJspritIterations(carrier) + "and is now " + nuOfJspritIteration);
+			CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
+		}
 
 		// Write out the original carriers file - before any modification is done
 		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/originalCarriers.xml" ) ;
@@ -69,7 +90,6 @@ public class RunFreightExample {
 		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
 			log.info(vehicleType.getId()+": "+vehicleType.getCapacity().getOther());
 		}
-
 
 		//Hier geschieht der Hauptteil der Arbeit: Das Aufteilen der Shipments :)
 		changeShipmentSize(scenario);
@@ -130,24 +150,21 @@ public class RunFreightExample {
 		log.info("Gib mir die size von demCarrier aus: "+shipmentSizes);
 	}
 
-	private static Config createConfig() {
+	private static Config prepareConfig(String[] args) {
 		Config config = ConfigUtils.createConfig();
 
 		config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
-
 		// more general settings
-		config.controler().setOutputDirectory("./output/freight" );
-
+		config.controler().setOutputDirectory(args[3]);
 		config.controler().setLastIteration(0 );		// yyyyyy iterations currently do not work; needs to be fixed.  (Internal discussion at end of file.)
-
 		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 
 		// freight settings
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightConfigGroup.class ) ;
+		freightConfigGroup.setCarriersFile(args[0]);
+		freightConfigGroup.setCarriersVehicleTypesFile(args[1]);
 
-		freightConfigGroup.setCarriersFile( "input/dummyCarrier.xml");
-
-		freightConfigGroup.setCarriersVehicleTypesFile( "input/dummyVehicleTypes.xml");
+		nuOfJspritIteration = Integer.parseInt(args[2]);
 		return config;
 	}
 
