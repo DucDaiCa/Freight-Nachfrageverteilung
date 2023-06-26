@@ -41,6 +41,17 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutionException;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public class RunFreightExample {
 
@@ -99,6 +110,7 @@ public class RunFreightExample {
 		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;
 		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
 
+		// creating a list and arrange shipment size of the tour
 		ShipmentSizeNumerator(scenario);
 
 		// Solving the VRP (generate carrier's tour plans)
@@ -107,6 +119,9 @@ public class RunFreightExample {
 		// Output after jsprit run (not necessary)
 		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_plannedCarriers.xml" ) ;
 		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
+
+		//Output the number of destination approaches of the tour
+		TourDestinationCounter();
 
 		// ## MATSim configuration:  ##
 		final Controler controler = new Controler( scenario ) ;
@@ -139,6 +154,73 @@ public class RunFreightExample {
 
 	}
 
+	private static void TourDestinationCounter() {
+		try {
+			File inputFile = new File("output/jsprit_plannedCarriers.xml");
+			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+			Document doc = dBuilder.parse(inputFile);
+			doc.getDocumentElement().normalize();
+
+			NodeList tourList = doc.getElementsByTagName("tour");
+			int tourCount = tourList.getLength();
+
+			// HashMap to store destination and its count
+			HashMap<String, Integer> destinationCountMap = new HashMap<>();
+
+			for (int i = 0; i < tourCount; i++) {
+				Node tourNode = tourList.item(i);
+
+				if (tourNode.getNodeType() == Node.ELEMENT_NODE) {
+					int counter = 0; // so that he won't count the same destination more than once for a tour
+					HashMap<String, Integer> tourDestinationCounter = new HashMap<>(); //counting  right amount of shipments destinations for the every tour
+					Element tourElement = (Element) tourNode;
+					NodeList actList = tourElement.getElementsByTagName("act");
+					int actCount = actList.getLength();
+
+					for (int j = 0; j < actCount; j++) {
+						Node actNode = actList.item(j);
+
+						if (actNode.getNodeType() == Node.ELEMENT_NODE) {
+							Element actElement = (Element) actNode;
+							String actType = actElement.getAttribute("type");
+
+							if (actType.equals("delivery")) {
+								String shipmentId = actElement.getAttribute("shipmentId");
+								String destination = getDestinationFromShipmentId(doc, shipmentId);
+
+								// Update the count for the destination
+								if (destinationCountMap.containsKey(destination) ) {
+									int counte = destinationCountMap.get(destination);
+									tourDestinationCounter.put(destination, counte + 1);
+									if( counter == 0) {
+										int count = destinationCountMap.get(destination);
+										destinationCountMap.put(destination, count + 1);
+										counter = 1;
+									}
+								} else {
+									destinationCountMap.put(destination, 1);
+									tourDestinationCounter.put(destination, 1);
+									counter = 1;
+								}
+							}
+						}
+					}
+					System.out.println("Zielorte der Tour: "+tourDestinationCounter);
+				}
+			}
+
+			// Print the destinations and their counts
+			for (Map.Entry<String, Integer> entries : destinationCountMap.entrySet()) {
+				String destination = entries.getKey();
+				int count = entries.getValue();
+				System.out.println("Zielort: " + destination + ", Wie oft hingefahren: " + count);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	private static void ShipmentSizeNumerator(Scenario scenario) {
 		LinkedList<Integer> shipmentSizes = new LinkedList<>();
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
@@ -147,7 +229,7 @@ public class RunFreightExample {
 			}
 		}
 		Collections.sort(shipmentSizes);
-		log.info("Gib mir die size von demCarrier aus: "+shipmentSizes);
+		log.info("Gib mir die size von dem Carrier aus: "+shipmentSizes);
 	}
 
 	private static Config prepareConfig(String[] args) {
@@ -174,14 +256,14 @@ public class RunFreightExample {
 
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			CarrierUtils.setJspritIterations(carrier,5);
-			/*for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
-				int size = carrierShipment.getSize()*3;
+			 /*
+			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
+				int size = carrierShipment.getSize()*2;
 
 				CarrierShipment newShipment = createShipment(carrierShipment, 0, size);
 				CarrierUtils.addShipment(carrier,newShipment); //add the new shipment to the carrier
-
-
-			}*/
+			}
+			 */
 		}
 
 
@@ -216,7 +298,7 @@ public class RunFreightExample {
 		}
 
 		// method to create new shipments ( hier werden die Shipments aufgeteilt und neu erstellt )
-		 /*
+		// /*
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 
 			LinkedList<CarrierShipment> newShipments = new LinkedList<>();  // Liste um die "neuen" Shipments temporär zu speichern, weil man sie nicht während des Iterierens hinzufügen kann.
@@ -257,7 +339,7 @@ public class RunFreightExample {
 			Gbl.assertIf(deliveryServiceTimeBefore == deliveryServiceTimeAfter);
 			Gbl.assertIf(pickupServiceTimeBefore == pickupServiceTimeAfter);
 		}
-		 */
+		// */
 	}
 
 	/**
@@ -379,6 +461,32 @@ public class RunFreightExample {
 		ThirdOfSmallestSize,
 		AverageOfTwoSmallestSize
 	}
+
+	/**
+	 * method for counting sizes/demand of all Shipments
+	 *
+	 * @param doc document file of an xml file
+	 * @param shipmentId  ID of the shipment
+	 * @return return the destination of the shipment
+	 */
+	private static String getDestinationFromShipmentId(Document doc, String shipmentId) {
+		String destination = "";
+		NodeList shipmentList = doc.getElementsByTagName("shipment");
+
+		for (int i = 0; i < shipmentList.getLength(); i++) {
+			Node shipmentNode = shipmentList.item(i);
+			if (shipmentNode.getNodeType() == Node.ELEMENT_NODE) {
+				Element shipmentElement = (Element) shipmentNode;
+				String id = shipmentElement.getAttribute("id");
+				if (id.equals(shipmentId)) {
+					destination = shipmentElement.getAttribute("to");
+					break;
+				}
+			}
+		}
+		return destination;
+	}
+
 
 
 
