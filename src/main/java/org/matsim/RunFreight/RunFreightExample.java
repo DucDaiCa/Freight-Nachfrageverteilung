@@ -37,12 +37,15 @@ import org.matsim.core.gbl.Gbl;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.vehicles.VehicleType;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutionException;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -69,14 +72,14 @@ public class RunFreightExample {
 		if ( args.length==0 ) {
 			String inputPath = "./input/";
 			args = new String[] {
-					inputPath+"dummyCarrier.xml",
-					inputPath + "dummyVehicleTypes.xml",
+					inputPath+"carrier_largeDelivery.xml",
+					inputPath + "VehicleTypes_40t_18t.xml",
 					"1",                                                    //only for demonstration.
 					"./output/Demo1It_small",
 			};
 		}
 
-		long start = System.nanoTime(); //TODO: Macht es Sinn, die Zeitmessung ab hier laufen zu lassen, wo ja noch die ganez Vorbereitung erfolgt?
+
 		// ### config stuff: ###
 		Config config = prepareConfig(args);
 
@@ -93,7 +96,7 @@ public class RunFreightExample {
 		}
 
 		// Write out the original carriers file - before any modification is done
-		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/originalCarriers.xml" ) ;
+		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/analyze_1/originalCarriers.xml" ) ;
 
 		// how to set the capacity of the "light" vehicle type to "25":
 		//FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 25 );
@@ -108,17 +111,51 @@ public class RunFreightExample {
 
 
 		// output before jsprit run (not necessary)
-		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;
+		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/analyze_1/jsprit_unplannedCarriers.xml" ) ;
 		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
 
 		// creating a list and arrange shipment size of the tour
 		ShipmentSizeNumerator(scenario);
 
+		long start = System.nanoTime();
+
 		// Solving the VRP (generate carrier's tour plans)
 		FreightUtils.runJsprit( scenario );
 
+		long end = System.nanoTime();
+		double durationSec = (end-start)/1e9;
+		double durationMin = (end-start)/(1e9*60);
+		File runTimeFile = new File("output/analyze_1/runTimeFile.txt");
+		BufferedWriter buffer = null;
+		try {
+
+			// create new BufferedWriter for the output file
+			buffer = new BufferedWriter(new FileWriter(runTimeFile));
+
+
+				// put key and value separated by a colon
+				buffer.write("Die Laufzeit des Szenarios beträgt: "+durationSec+" s bzw. "+durationMin+" min");
+
+				// new line
+				buffer.newLine();
+
+
+			buffer.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+
+			try {
+
+				// always close the writer
+				buffer.close();
+			} catch (Exception e) {
+			}
+		}
+		//System.out.println("Zeit: "+durationMS+" s");
+
 		// Output after jsprit run (not necessary)
-		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_plannedCarriers.xml" ) ;
+		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/analyze_1/jsprit_plannedCarriers.xml" ) ;
 		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
 
 		//Output the number of destination approaches of the tour
@@ -141,10 +178,6 @@ public class RunFreightExample {
 		// ## Start of the MATSim-Run: ##
 		controler.run();
 
-		long end = System.nanoTime();
-		double durationMS = (end-start)/1e9;
-		System.out.println("Zeit: "+durationMS+" s");
-
 		// Creating the Analysis files
 		RunFreightAnalysisEventbased FreightAnalysis = new RunFreightAnalysisEventbased(controler.getControlerIO().getOutputPath(),controler.getControlerIO().getOutputPath()+"/analyze");
 		try {
@@ -157,7 +190,7 @@ public class RunFreightExample {
 
 	private static void TourDestinationCounter() {
 		try {
-			File inputFile = new File("output/jsprit_plannedCarriers.xml");
+			File inputFile = new File("output/analyze_1/jsprit_plannedCarriers.xml");
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 			Document doc = dBuilder.parse(inputFile);
@@ -168,6 +201,13 @@ public class RunFreightExample {
 
 			// HashMap to store destination and its count
 			HashMap<String, Integer> destinationCountMap = new HashMap<>();
+
+			// new file object
+			File file = new File("output/analyze_1/TourDestination_Carrier.txt");
+			BufferedWriter bf = null;
+
+			// create new BufferedWriter for the output file
+			bf = new BufferedWriter(new FileWriter(file));
 
 			for (int i = 0; i < tourCount; i++) {
 				Node tourNode = tourList.item(i);
@@ -192,8 +232,11 @@ public class RunFreightExample {
 
 								// Update the count for the destination
 								if (destinationCountMap.containsKey(destination) ) {
-									int counte = destinationCountMap.get(destination);
-									tourDestinationCounter.put(destination, counte + 1);
+
+										int counte = destinationCountMap.get(destination);
+										tourDestinationCounter.put(destination, counte + 1);
+
+
 									if( counter == 0) {
 										int count = destinationCountMap.get(destination);
 										destinationCountMap.put(destination, count + 1);
@@ -207,18 +250,86 @@ public class RunFreightExample {
 							}
 						}
 					}
-					System.out.println("Zielorte der Tour: "+tourDestinationCounter);
+					System.out.println("Zielorte der Fahrt: "+tourDestinationCounter);
+					//OutputTourDestination(tourDestinationCounter,1,file);
 				}
 			}
 
 			// Print the destinations and their counts
+			OutputTourDestination(destinationCountMap,2,file);
 			for (Map.Entry<String, Integer> entries : destinationCountMap.entrySet()) {
-				String destination = entries.getKey();
-				int count = entries.getValue();
-				System.out.println("Zielort: " + destination + ", Wie oft hingefahren: " + count);
+				System.out.println("Zielort: " + entries.getKey() + "  ||  Wie oft hingefahren: " + entries.getValue());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+
+	private static void OutputTourDestination(HashMap<String,Integer> map,int num,File file ){
+
+		BufferedWriter bf = null;
+		switch(num) {
+			case 1: {
+				try {
+
+					// create new BufferedWriter for the output file
+					bf = new BufferedWriter(new FileWriter(file));
+					// iterate map entries
+					for (Map.Entry<String, Integer> entry :
+							map.entrySet()) {
+
+						// put key and value separated by a colon
+						bf.write("Zielorte der Fahrt: "+map);
+
+						// new line
+						bf.newLine();
+					}
+
+					bf.flush();
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally {
+
+					try {
+
+						// always close the writer
+						bf.close();
+					} catch (Exception e) {
+					}
+				}
+			}
+			break;
+			case 2:{
+				try {
+
+					// create new BufferedWriter for the output file
+					bf = new BufferedWriter(new FileWriter(file));
+
+					// iterate map entries
+					for (Map.Entry<String, Integer> entry :
+							map.entrySet()) {
+
+						// put key and value separated by a colon
+						bf.write("Zielort: "+entry.getKey() + "  ||  Wie oft hingefahren: " + entry.getValue());
+
+						// new line
+						bf.newLine();
+					}
+
+					bf.flush();
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally {
+
+					try {
+
+						// always close the writer
+						bf.close();
+					} catch (Exception e) {
+					}
+				}
+			}
+			break;
 		}
 	}
 
@@ -253,19 +364,18 @@ public class RunFreightExample {
 
 	private static void changeShipmentSize(org.matsim.api.core.v01.Scenario scenario) {
 
-		// changing shipment size of existing shipment
-
+		/*// changing shipment size of existing shipment
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			CarrierUtils.setJspritIterations(carrier,5);
-			 /*
+			 *//*
 			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
 				int size = carrierShipment.getSize()*2;
 
 				CarrierShipment newShipment = createShipment(carrierShipment, 0, size);
 				CarrierUtils.addShipment(carrier,newShipment); //add the new shipment to the carrier
 			}
-			 */
-		}
+			 *//*
+		}*/
 
 
 		Plot mySelection =  Plot.SmallestSize;
@@ -282,7 +392,6 @@ public class RunFreightExample {
 			{
 				//size of the smallest vehicle to break up the shipment into smaller chunks
 			}
-
 			break;
 			case HalfOfSmallestSize:
 			{
