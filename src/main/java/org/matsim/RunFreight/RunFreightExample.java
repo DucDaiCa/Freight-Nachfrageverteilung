@@ -40,14 +40,10 @@ import org.matsim.vehicles.VehicleType;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -72,8 +68,8 @@ public class RunFreightExample {
 		if ( args.length==0 ) {
 			String inputPath = "./input/";
 			args = new String[] {
-					inputPath+"carrier_largeDelivery.xml",
-					inputPath + "VehicleTypes_40t_18t.xml",
+					inputPath+"carrier_manyDestination.xml",
+					inputPath + "VehicleTypes_26t_8t.xml",
 					"1",                                                    //only for demonstration.
 					"./output/Demo1It_small",
 			};
@@ -96,7 +92,7 @@ public class RunFreightExample {
 		}
 
 		// Write out the original carriers file - before any modification is done
-		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/analyze_1/originalCarriers.xml" ) ;
+		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/originalCarriers.xml" ) ;
 
 		// how to set the capacity of the "light" vehicle type to "25":
 		//FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 25 );
@@ -111,7 +107,7 @@ public class RunFreightExample {
 
 
 		// output before jsprit run (not necessary)
-		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/analyze_1/jsprit_unplannedCarriers.xml" ) ;
+		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;
 		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
 
 		// creating a list and arrange shipment size of the tour
@@ -125,41 +121,8 @@ public class RunFreightExample {
 		long end = System.nanoTime();
 		double durationSec = (end-start)/1e9;
 		double durationMin = (end-start)/(1e9*60);
-		File runTimeFile = new File("output/analyze_1/runTimeFile.txt");
-		BufferedWriter buffer = null;
-		try {
-
-			// create new BufferedWriter for the output file
-			buffer = new BufferedWriter(new FileWriter(runTimeFile));
-
-
-				// put key and value separated by a colon
-				buffer.write("Die Laufzeit des Szenarios beträgt: "+durationSec+" s bzw. "+durationMin+" min");
-
-				// new line
-				buffer.newLine();
-
-
-			buffer.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-
-			try {
-
-				// always close the writer
-				buffer.close();
-			} catch (Exception e) {
-			}
-		}
 		//System.out.println("Zeit: "+durationMS+" s");
 
-		// Output after jsprit run (not necessary)
-		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/analyze_1/jsprit_plannedCarriers.xml" ) ;
-		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
-
-		//Output the number of destination approaches of the tour
-		TourDestinationCounter();
 
 		// ## MATSim configuration:  ##
 		final Controler controler = new Controler( scenario ) ;
@@ -186,11 +149,49 @@ public class RunFreightExample {
 			throw new RuntimeException(e);
 		}
 
+		// Output after jsprit run (not necessary)
+		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( controler.getControlerIO().getOutputPath()+"/analyze/jsprit_plannedCarriers.xml" ) ;
+		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
+
+		//Output the number of destination approaches of the tour
+		tourDestinationCounter(controler.getControlerIO().getOutputPath());
+
+		runTimeOutput(durationSec, durationMin, controler);
 	}
 
-	private static void TourDestinationCounter() {
+	private static void runTimeOutput(double durationSec, double durationMin, Controler controler) {
+		File runTimeFile = new File(controler.getControlerIO().getOutputPath()+"/analyze/runTimeFile.txt");
+		BufferedWriter buffer = null;
 		try {
-			File inputFile = new File("output/analyze_1/jsprit_plannedCarriers.xml");
+
+			// create new BufferedWriter for the output file
+			buffer = new BufferedWriter(new FileWriter(runTimeFile));
+
+
+			// put key and value separated by a tab
+			buffer.write("Die Laufzeit des Szenarios beträgt: "+ durationSec +" s \t  "+ durationMin +" min");
+
+			// new line
+			buffer.newLine();
+
+
+			buffer.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+
+			try {
+
+				// close the writer
+				buffer.close();
+			} catch (Exception e) {
+			}
+		}
+	}
+
+	private static void tourDestinationCounter(String outpath) {
+		try {
+			File inputFile = new File(outpath+"/analyze/jsprit_plannedCarriers.xml");
 			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 			Document doc = dBuilder.parse(inputFile);
@@ -203,17 +204,14 @@ public class RunFreightExample {
 			HashMap<String, Integer> destinationCountMap = new HashMap<>();
 
 			// new file object
-			File file = new File("output/analyze_1/TourDestination_Carrier.txt");
-			BufferedWriter bf = null;
-
-			// create new BufferedWriter for the output file
-			bf = new BufferedWriter(new FileWriter(file));
+			File file = new File(outpath+"/analyze/TourDestination_Carrier.txt");
 
 			for (int i = 0; i < tourCount; i++) {
 				Node tourNode = tourList.item(i);
 
 				if (tourNode.getNodeType() == Node.ELEMENT_NODE) {
-					int counter = 0; // so that he won't count the same destination more than once for a tour
+					HashMap<String, Integer>  counter = new HashMap<>(); // so that he won't count the same destination more than once for a tour
+					nullHashMapBuilder(doc,counter);
 					HashMap<String, Integer> tourDestinationCounter = new HashMap<>(); //counting  right amount of shipments destinations for the every tour
 					Element tourElement = (Element) tourNode;
 					NodeList actList = tourElement.getElementsByTagName("act");
@@ -233,20 +231,25 @@ public class RunFreightExample {
 								// Update the count for the destination
 								if (destinationCountMap.containsKey(destination) ) {
 
-										int counte = destinationCountMap.get(destination);
-										tourDestinationCounter.put(destination, counte + 1);
-
-
-									if( counter == 0) {
+									if(counter.get(destination)== 0) {
 										int count = destinationCountMap.get(destination);
 										destinationCountMap.put(destination, count + 1);
-										counter = 1;
+										counter.put(destination, 1);
 									}
 								} else {
 									destinationCountMap.put(destination, 1);
-									tourDestinationCounter.put(destination, 1);
-									counter = 1;
+									counter.put(destination, 1);
 								}
+
+								if ( tourDestinationCounter.containsKey(destination) ) {
+
+									int counte = tourDestinationCounter.get(destination);
+									tourDestinationCounter.put(destination, counte + 1);
+
+								} else{
+									tourDestinationCounter.put(destination, 1);
+								}
+
 							}
 						}
 					}
@@ -256,16 +259,16 @@ public class RunFreightExample {
 			}
 
 			// Print the destinations and their counts
-			OutputTourDestination(destinationCountMap,2,file);
+			outputTourDestination(destinationCountMap,2,file);
 			for (Map.Entry<String, Integer> entries : destinationCountMap.entrySet()) {
-				System.out.println("Zielort: " + entries.getKey() + "  ||  Wie oft hingefahren: " + entries.getValue());
+				System.out.println("Zielort: " + entries.getKey() + "  \t   Wie oft hingefahren: " + entries.getValue());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	private static void OutputTourDestination(HashMap<String,Integer> map,int num,File file ){
+	private static void outputTourDestination(HashMap<String,Integer> map, int num, File file ){
 
 		BufferedWriter bf = null;
 		switch(num) {
@@ -292,7 +295,7 @@ public class RunFreightExample {
 
 					try {
 
-						// always close the writer
+						// close the writer
 						bf.close();
 					} catch (Exception e) {
 					}
@@ -310,7 +313,7 @@ public class RunFreightExample {
 							map.entrySet()) {
 
 						// put key and value separated by a colon
-						bf.write("Zielort: "+entry.getKey() + "  ||  Wie oft hingefahren: " + entry.getValue());
+						bf.write("Zielort: "+entry.getKey() + "  \t   Wie oft hingefahren: " + entry.getValue());
 
 						// new line
 						bf.newLine();
@@ -323,7 +326,7 @@ public class RunFreightExample {
 
 					try {
 
-						// always close the writer
+						// close the writer
 						bf.close();
 					} catch (Exception e) {
 					}
@@ -341,8 +344,43 @@ public class RunFreightExample {
 			}
 		}
 		Collections.sort(shipmentSizes);
-		log.info("Gib mir die size von dem Carrier aus: "+shipmentSizes);
+		log.info("Gib mir die size von dem Carrier aus: " + shipmentSizes);
+
+		Map<Integer, Integer> countMap = countOccurrences(shipmentSizes);
+
+		//sort by key
+		Map<Integer, Integer> sortCountMap = new TreeMap<Integer, Integer>(countMap);
+
+		//Output shipment size occur
+		System.out.println(sortCountMap.entrySet());
+		/*for (Map.Entry<Integer, Integer> entry : countMap.entrySet()) {
+			System.out.println("Number " + entry.getKey() + " occurs " + entry.getValue() + " times.");
+		}*/
 	}
+
+		public static Map<Integer, Integer> countOccurrences(LinkedList<Integer> linkedList) {
+			Map<Integer, Integer> countMap = new HashMap<>();
+
+			for (Integer number : linkedList) {
+				countMap.put(number, countMap.getOrDefault(number, 0) + 1);
+			}
+
+			return countMap;
+		}
+
+		private static void nullHashMapBuilder(Document doc,HashMap hashMap){
+		NodeList shipmentList = doc.getElementsByTagName("shipment");
+
+			for (int temp = 0; temp < shipmentList.getLength(); temp++) {
+				Node node = shipmentList.item(temp);
+				if (node.getNodeType() == Node.ELEMENT_NODE) {
+					Element shipmentElement = (Element) node;
+					String destination = shipmentElement.getAttribute("to");
+					hashMap.put(destination, hashMap.getOrDefault(destination, 0));
+				}
+			}
+		}
+
 
 	private static Config prepareConfig(String[] args) {
 		Config config = ConfigUtils.createConfig();
@@ -408,7 +446,7 @@ public class RunFreightExample {
 		}
 
 		// method to create new shipments ( hier werden die Shipments aufgeteilt und neu erstellt )
-		// /*
+		 /*
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 
 			LinkedList<CarrierShipment> newShipments = new LinkedList<>();  // Liste um die "neuen" Shipments temporär zu speichern, weil man sie nicht während des Iterierens hinzufügen kann.
@@ -422,9 +460,9 @@ public class RunFreightExample {
 			double pickupServiceTimeAfter = 0.0;
 
 			// counting shipment demand, deliveryServiceTime, pickupServiceTime before making new shipments
-			demandBefore = Demand(carrier,demandBefore);
-			deliveryServiceTimeBefore = SumServiceTime(carrier,deliveryServiceTimeBefore,1);
-			pickupServiceTimeBefore= SumServiceTime(carrier,pickupServiceTimeBefore,2);
+			demandBefore = demand(carrier,demandBefore);
+			deliveryServiceTimeBefore = sumServiceTime(carrier,deliveryServiceTimeBefore,1);
+			pickupServiceTimeBefore= sumServiceTime(carrier,pickupServiceTimeBefore,2);
 
 
 			shipmentCreator((int) Boundary_value, carrier, newShipments, oldShipments);
@@ -440,16 +478,16 @@ public class RunFreightExample {
 			}
 
 			// counting shipment demand, deliveryServiceTime, pickupServiceTime after making the new shipments
-			demandAfter = Demand(carrier,demandAfter);
-			deliveryServiceTimeAfter = SumServiceTime(carrier,deliveryServiceTimeAfter,1);
-			pickupServiceTimeAfter = SumServiceTime(carrier,pickupServiceTimeAfter,2);
+			demandAfter = demand(carrier,demandAfter);
+			deliveryServiceTimeAfter = sumServiceTime(carrier,deliveryServiceTimeAfter,1);
+			pickupServiceTimeAfter = sumServiceTime(carrier,pickupServiceTimeAfter,2);
 
 			// here checking if the numbers stayed the same
 			Gbl.assertIf(demandBefore == demandAfter);
 			Gbl.assertIf(deliveryServiceTimeBefore == deliveryServiceTimeAfter);
 			Gbl.assertIf(pickupServiceTimeBefore == pickupServiceTimeAfter);
 		}
-		// */
+		 */
 	}
 
 	/**
@@ -529,7 +567,7 @@ public class RunFreightExample {
 	 * @param demand counter to sum up all shipments
 	 * @return the sum of the whole shipments
 	 */
-	private static int Demand(Carrier carrier, int demand){
+	private static int demand(Carrier carrier, int demand){
 
 		for (CarrierShipment carrierShipment : carrier.getShipments().values()){
 			demand = demand + carrierShipment.getSize();
@@ -545,7 +583,7 @@ public class RunFreightExample {
 	 * @param num variable to decide if sum up delivery or pickup service time
 	 * @return the sum of the whole shipments
 	 */
-	private static double SumServiceTime(Carrier carrier, double serviceTime, int num ){
+	private static double sumServiceTime(Carrier carrier, double serviceTime, int num ){
 
 		switch(num) {
 			case 1:{
