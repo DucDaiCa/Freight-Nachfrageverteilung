@@ -47,6 +47,10 @@ import java.io.File;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -68,12 +72,14 @@ public class RunFreightExample {
 		if ( args.length==0 ) {
 			String inputPath = "./input/";
 			args = new String[] {
-					inputPath+"carrier_manyDestination.xml",
+					inputPath+"TestScenario_SingleVehicle_ThreeShipments.xml",
 					inputPath + "VehicleTypes_26t_8t.xml",
-					"1",                                                    //only for demonstration.
+					"50",                                                    //only for demonstration.
 					"./output/Demo1It_small",
 			};
 		}
+
+		xmlNameChangeID(args);
 
 
 		// ### config stuff: ###
@@ -111,7 +117,7 @@ public class RunFreightExample {
 		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
 
 		// creating a list and arrange shipment size of the tour
-		ShipmentSizeNumerator(scenario);
+		shipmentSizeNumerator(scenario);
 
 		long start = System.nanoTime();
 
@@ -159,6 +165,68 @@ public class RunFreightExample {
 		runTimeOutput(durationSec, durationMin, controler);
 	}
 
+	/**
+	 * renames the ID names of a xml file
+	 *
+	 * @param args String array with arguments
+	 */
+	private static void xmlNameChangeID(String[] args) {
+		try {
+			//loading XML-document
+			File inputFile = new File(args[0]);
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder builder = factory.newDocumentBuilder();
+			Document doc = builder.parse(inputFile);
+
+			// getting the root of the document
+			Element root = doc.getDocumentElement();
+
+			// getting all carrier elements
+			NodeList carrierList = root.getElementsByTagName("carrier");
+
+			for (int i = 0; i < carrierList.getLength(); i++) {
+				Element carrier = (Element) carrierList.item(i);
+
+				// changing carrier ID
+				String currentCarrierID = carrier.getAttribute("id");
+				String newCarrierID = currentCarrierID + "_" + args[2] + "it";
+				carrier.setAttribute("id", newCarrierID);
+
+				// getting all vehicle elements int the carrier
+				NodeList vehicleList = carrier.getElementsByTagName("vehicle");
+
+
+				for (int j = 0; j < vehicleList.getLength(); j++) {
+					Element vehicle = (Element) vehicleList.item(j);
+
+					// changing the vehicle id
+					String currentVehicleID = vehicle.getAttribute("id");
+					String newVehicleID = currentVehicleID + "_" + args[2] + "it";
+					vehicle.setAttribute("id", newVehicleID);
+				}
+			}
+
+			// saving the updated document in a xml file
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			Transformer transformer = transformerFactory.newTransformer();
+			DOMSource source = new DOMSource(doc);
+			StreamResult result = new StreamResult(new File("input/Shipment.xml"));
+			transformer.transform(source, result);
+			args[0] = "input/Shipment.xml";
+
+			log.info("XML wurde erfolgreich aktualisiert: "+ args[0] );
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * writing the runtime in a txt file
+	 *
+	 * @param durationSec time in seconds
+	 * @param durationMin time in minutes
+	 */
 	private static void runTimeOutput(double durationSec, double durationMin, Controler controler) {
 		File runTimeFile = new File(controler.getControlerIO().getOutputPath()+"/analyze/runTimeFile.txt");
 		BufferedWriter buffer = null;
@@ -189,6 +257,11 @@ public class RunFreightExample {
 		}
 	}
 
+	/**
+	 * counts how often a destination was driven to as part of a tour
+	 *
+	 * @param outpath path of the folder
+	 */
 	private static void tourDestinationCounter(String outpath) {
 		try {
 			File inputFile = new File(outpath+"/analyze/jsprit_plannedCarriers.xml");
@@ -258,7 +331,7 @@ public class RunFreightExample {
 				}
 			}
 
-			// Print the destinations and their counts
+			// Prints the destinations and their counts
 			outputTourDestination(destinationCountMap,2,file);
 			for (Map.Entry<String, Integer> entries : destinationCountMap.entrySet()) {
 				System.out.println("Zielort: " + entries.getKey() + "  \t   Wie oft hingefahren: " + entries.getValue());
@@ -268,6 +341,11 @@ public class RunFreightExample {
 		}
 	}
 
+	/**
+	 * writes the destination and their counts on a file
+	 *
+	 * @param map HashMap with the information
+	 */
 	private static void outputTourDestination(HashMap<String,Integer> map, int num, File file ){
 
 		BufferedWriter bf = null;
@@ -336,7 +414,11 @@ public class RunFreightExample {
 		}
 	}
 
-	private static void ShipmentSizeNumerator(Scenario scenario) {
+	/**
+	 * method to output the shipment sizes in a HashMap
+	 *
+	 */
+	private static void shipmentSizeNumerator(Scenario scenario) {
 		LinkedList<Integer> shipmentSizes = new LinkedList<>();
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
@@ -344,7 +426,7 @@ public class RunFreightExample {
 			}
 		}
 		Collections.sort(shipmentSizes);
-		log.info("Gib mir die size von dem Carrier aus: " + shipmentSizes);
+		log.info("Gib mir die Größe von dem Shipments aus: " + shipmentSizes);
 
 		Map<Integer, Integer> countMap = countOccurrences(shipmentSizes);
 
@@ -400,6 +482,10 @@ public class RunFreightExample {
 		return config;
 	}
 
+//ZUI
+	/**
+	 * method for creating new Shipments
+	 */
 	private static void changeShipmentSize(org.matsim.api.core.v01.Scenario scenario) {
 
 		/*// changing shipment size of existing shipment
@@ -415,8 +501,7 @@ public class RunFreightExample {
 			 *//*
 		}*/
 
-
-		Plot mySelection =  Plot.SmallestSize;
+		Plot mySelection =  Plot.HalfOfSmallestSize;
 		double Boundary_value = Double.MAX_VALUE;
 		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
 			if(vehicleType.getCapacity().getOther() < Boundary_value)
@@ -433,12 +518,13 @@ public class RunFreightExample {
 			break;
 			case HalfOfSmallestSize:
 			{
-				Boundary_value = Boundary_value/2;
+				//Boundary_value = Boundary_value/2;
+				Boundary_value = 1;
 			}
 			break;
-			case ThirdOfSmallestSize:
+			case SizeTwo:
 			{
-				Boundary_value = Boundary_value/3;
+				Boundary_value = 2;
 			}
 			break;
 			default:
@@ -446,7 +532,11 @@ public class RunFreightExample {
 		}
 
 		// method to create new shipments ( hier werden die Shipments aufgeteilt und neu erstellt )
-		 /*
+		createShipment(scenario, (int) Boundary_value);
+
+	}
+
+	private static void createShipment(Scenario scenario, int Boundary_value) {
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 
 			LinkedList<CarrierShipment> newShipments = new LinkedList<>();  // Liste um die "neuen" Shipments temporär zu speichern, weil man sie nicht während des Iterierens hinzufügen kann.
@@ -465,7 +555,7 @@ public class RunFreightExample {
 			pickupServiceTimeBefore= sumServiceTime(carrier,pickupServiceTimeBefore,2);
 
 
-			shipmentCreator((int) Boundary_value, carrier, newShipments, oldShipments);
+			shipmentCreator(Boundary_value, carrier, newShipments, oldShipments);
 
 			// remove the old shipments
 			for (CarrierShipment shipmentToRemove : oldShipments) {
@@ -487,7 +577,6 @@ public class RunFreightExample {
 			Gbl.assertIf(deliveryServiceTimeBefore == deliveryServiceTimeAfter);
 			Gbl.assertIf(pickupServiceTimeBefore == pickupServiceTimeAfter);
 		}
-		 */
 	}
 
 	/**
@@ -606,7 +695,7 @@ public class RunFreightExample {
 	enum Plot {
 		SmallestSize,
 		HalfOfSmallestSize,
-		ThirdOfSmallestSize,
+		SizeTwo,
 		AverageOfTwoSmallestSize
 	}
 
@@ -633,6 +722,25 @@ public class RunFreightExample {
 			}
 		}
 		return destination;
+	}
+
+	/**
+	 * Berechnung des ggT zweier Zahlen
+	 * nach dem Euklidischen Algorithmus
+	 *
+	 * @param numb1 the already existing carrier
+	 * @param numb2 variable to sum up servicetime in the carrier
+	 * @return den gräßten gemeinsamen Teiler
+	 */
+	private static int ggt(int numb1, int numb2) {
+		while (numb2 != 0) {
+			if (numb1 > numb2) {
+				numb1 = numb1 - numb2;
+			} else {
+				numb2 = numb2 - numb1;
+			}
+		}
+		return numb1;
 	}
 
 

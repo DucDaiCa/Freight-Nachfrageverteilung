@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<carriers>
+    <carrier id="carrier_FourShipments_A">
+        <capabilities fleetSize="INFINITE">
+            <vehicles>
+                <vehicle id="heavy26t_59933" depotLinkId="59933" typeId="heavy26t" earliestStart="09:00:00" latestEnd="19:00:00"/>
+            </vehicles>
+        </capabilities>
+        <shipments>
+
+            <shipment id="228_edeka" from="59933" to="108280" size="24" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:12:00" deliveryServiceTime="01:12:00"/>
+            <shipment id="242_edeka" from="59933" to="104051" size="24" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:12:00" deliveryServiceTime="01:12:00"/>
+            <shipment id="252_edeka" from="59933" to="15863" size="24" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:12:00" deliveryServiceTime="01:12:00"/>
+            <shipment id="268_edeka" from="59933" to="143950" size="24" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:12:00" deliveryServiceTime="01:12:00"/>
+
+        </shipments>
+        <services> </services>
+    </carrier>
+</carriers>
