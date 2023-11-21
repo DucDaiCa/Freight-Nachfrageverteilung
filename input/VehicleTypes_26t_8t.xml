@@ -18,7 +18,7 @@
         <flowEfficiencyFactor factor="1.0"/>
     </vehicleType>
 
-    <vehicleType id="light8t">
+   <!-- <vehicleType id="light8t">
         <description>Light Vehicle 7.5t</description>
         <capacity seats="1" standingRoomInPersons="0" other="10.0"> </capacity>
         <length meter="7.5"/>
@@ -32,7 +32,7 @@
         <passengerCarEquivalents pce="1.0"/>
         <networkMode networkMode="car"/>
         <flowEfficiencyFactor factor="1.0"/>
-    </vehicleType>
+    </vehicleType>-->
 
 
     <!--<vehicleType id="heavy26t_frozen">

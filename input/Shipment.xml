@@ -1,18 +1,19 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><carriers>
-    <carrier id="carrier_ThreeShipments_50it">
-        <capabilities fleetSize="INFINITE">
-            <vehicles>
-                <vehicle depotLinkId="59933" earliestStart="09:00:00" id="heavy26t_59933_50it" latestEnd="19:00:00" typeId="heavy26t"/>
-            </vehicles>
-        </capabilities>
-        <shipments>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><carriers xmlns="http://www.matsim.org/files/dtd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.matsim.org/files/dtd http://www.matsim.org/files/dtd/carriersDefinitions_v2.1.xsd">
+	<carrier id="carrier_FourShipments_A_200it">
+		<capabilities fleetSize="INFINITE">
+			<vehicles>
+				<vehicle depotLinkId="59933" earliestStart="09:00:00" id="heavy26t_59933_200it" latestEnd="19:00:00" typeId="heavy26t"/>
+			</vehicles>
 
-            <shipment deliveryServiceTime="01:12:00" endDelivery="19:00:00" endPickup="19:00:00" from="59933" id="228_edeka" pickupServiceTime="01:12:00" size="24" startDelivery="09:00:00" startPickup="09:00:00" to="108280"/>
-            <shipment deliveryServiceTime="01:12:00" endDelivery="19:00:00" endPickup="19:00:00" from="59933" id="242_edeka" pickupServiceTime="01:12:00" size="24" startDelivery="09:00:00" startPickup="09:00:00" to="104051"/>
-            <shipment deliveryServiceTime="01:12:00" endDelivery="19:00:00" endPickup="19:00:00" from="59933" id="252_edeka" pickupServiceTime="01:12:00" size="24" startDelivery="09:00:00" startPickup="09:00:00" to="15863"/>
+		</capabilities>
 
+		<shipments>
+			<shipment deliveryServiceTime="01:30:00" endDelivery="19:00:00" endPickup="19:00:00" from="59933" id="228_edeka" pickupServiceTime="01:30:00" size="30" startDelivery="09:00:00" startPickup="09:00:00" to="108280"/>
+			<shipment deliveryServiceTime="00:51:00" endDelivery="19:00:00" endPickup="19:00:00" from="59933" id="242_edeka" pickupServiceTime="00:51:00" size="17" startDelivery="09:00:00" startPickup="09:00:00" to="104051"/>
+			<shipment deliveryServiceTime="00:09:00" endDelivery="19:00:00" endPickup="19:00:00" from="59933" id="252_edeka" pickupServiceTime="00:09:00" size="3" startDelivery="09:00:00" startPickup="09:00:00" to="15863"/>
+			<shipment deliveryServiceTime="02:18:00" endDelivery="19:00:00" endPickup="19:00:00" from="59933" id="268_edeka" pickupServiceTime="02:18:00" size="46" startDelivery="09:00:00" startPickup="09:00:00" to="143950"/>
+		</shipments>
 
-        </shipments>
-        <services> </services>
-    </carrier>
+	</carrier>
+
 </carriers>

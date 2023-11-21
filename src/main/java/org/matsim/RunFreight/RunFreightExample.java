@@ -72,13 +72,14 @@ public class RunFreightExample {
 		if ( args.length==0 ) {
 			String inputPath = "./input/";
 			args = new String[] {
-					inputPath+"TestScenario_SingleVehicle_ThreeShipments.xml",
+					inputPath+ "TestScenario_SingleVehicle_FourShipments_Ver.A.xml",
 					inputPath + "VehicleTypes_26t_8t.xml",
-					"50",                                                    //only for demonstration.
-					"./output/Demo1It_small",
+					"200",                                                    //only for demonstration.
+					"./output/Demo_Freight",
 			};
 		}
 
+		// extending xml name with the iteration (2)
 		xmlNameChangeID(args);
 
 
@@ -88,10 +89,15 @@ public class RunFreightExample {
 		// load scenario (this is not loading the freight material):
 		org.matsim.api.core.v01.Scenario scenario = ScenarioUtils.loadScenario( config );
 
+
 		// load carriers according to freight config
 		FreightUtils.loadCarriersAccordingToFreightConfig( scenario );
 
-		//set # of jsprit iterations
+		// changes Shipment sizes randomly (1) then comment code and uncomment (2) above
+		// randomShipmentDistribution(scenario,args);
+
+
+		// set # of jsprit iterations
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			log.warn("Overwriting the number of jsprit iterations for carrier: " + carrier.getId() + ". Value was before " +CarrierUtils.getJspritIterations(carrier) + "and is now " + nuOfJspritIteration);
 			CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
@@ -104,9 +110,9 @@ public class RunFreightExample {
 		//FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 25 );
 
 		// What vehicle types do we have
-		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
-			log.info(vehicleType.getId()+": "+vehicleType.getCapacity().getOther());
-		}
+		//for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
+		//	log.info(vehicleType.getId()+": "+vehicleType.getCapacity().getOther());
+		//}
 
 		//Hier geschieht der Hauptteil der Arbeit: Das Aufteilen der Shipments :)
 		changeShipmentSize(scenario);
@@ -163,6 +169,65 @@ public class RunFreightExample {
 		tourDestinationCounter(controler.getControlerIO().getOutputPath());
 
 		runTimeOutput(durationSec, durationMin, controler);
+	}
+
+	private static void randomShipmentDistribution(Scenario scenario, String[] args) {
+		int demand = 0;
+		Random random = new Random();
+		Map<String, Integer> countDestination = new HashMap<>();
+
+		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()){
+			demand  = demand(carrier,demand);
+
+			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
+
+				if(!countDestination.containsKey(carrierShipment.getTo().toString()));
+				{
+					countDestination.put(carrierShipment.getTo().toString(),0);
+				}
+			}
+
+			demand = demand - countDestination.size();
+			int numOfDestination = countDestination.size()-1;
+
+			// random distribution on the HashMap entries
+			for (Map.Entry<String, Integer> entry : countDestination.entrySet()) {
+				int randomValue = random.nextInt(demand + 1); // Zufällige Zahl von 0 bis total
+
+				if (numOfDestination != 0) {
+					//randomValue =23;
+					countDestination.put(entry.getKey(), randomValue+1);
+
+					demand -= randomValue;
+					//log.info("Gebe mir neuen demand aus: "+demand);
+					numOfDestination -= 1;
+					//log.info("Gebe mir neuen destinationlänge aus: "+numOfDestination);
+
+				} else {
+					countDestination.put(entry.getKey(), demand+1);
+				}
+			}
+
+		}
+		//log.info("Gebe mir die HashMap der Zielorte aus: "+countDestination);
+		for (var carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
+			for (var carrierShipment : carrier.getShipments().values()) {
+				for (Map.Entry<String, Integer> entry : countDestination.entrySet()) {
+					if(entry.getKey().equals(carrierShipment.getTo().toString())) {
+
+						CarrierShipment newCarrierShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId(),CarrierShipment.class),
+										carrierShipment.getFrom(), carrierShipment.getTo(), entry.getValue())
+								.setDeliveryServiceTime((double) entry.getValue()*180)
+								.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
+								.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
+								.setPickupServiceTime((double) entry.getValue()*180)
+								.build();
+						CarrierUtils.addShipment(carrier,newCarrierShipment);
+					}
+				}
+			}
+		}
+		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write(args[0]) ;
 	}
 
 	/**
@@ -426,15 +491,15 @@ public class RunFreightExample {
 			}
 		}
 		Collections.sort(shipmentSizes);
-		log.info("Gib mir die Größe von dem Shipments aus: " + shipmentSizes);
+		//log.info("Gib mir die Größe von dem Shipments aus: " + shipmentSizes);
 
 		Map<Integer, Integer> countMap = countOccurrences(shipmentSizes);
 
-		//sort by key
+		// sort by key
 		Map<Integer, Integer> sortCountMap = new TreeMap<Integer, Integer>(countMap);
 
-		//Output shipment size occur
-		System.out.println(sortCountMap.entrySet());
+		// Output shipment size occur
+		//log.info(sortCountMap.entrySet());
 		/*for (Map.Entry<Integer, Integer> entry : countMap.entrySet()) {
 			System.out.println("Number " + entry.getKey() + " occurs " + entry.getValue() + " times.");
 		}*/
@@ -484,7 +549,7 @@ public class RunFreightExample {
 
 //ZUI
 	/**
-	 * method for creating new Shipments
+	 * method for breaking up Shipments into smaller ones
 	 */
 	private static void changeShipmentSize(org.matsim.api.core.v01.Scenario scenario) {
 
@@ -501,7 +566,7 @@ public class RunFreightExample {
 			 *//*
 		}*/
 
-		Plot mySelection =  Plot.HalfOfSmallestSize;
+		Plot mySelection =  Plot.SizeOne;
 		double Boundary_value = Double.MAX_VALUE;
 		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
 			if(vehicleType.getCapacity().getOther() < Boundary_value)
@@ -516,15 +581,24 @@ public class RunFreightExample {
 				//size of the smallest vehicle to break up the shipment into smaller chunks
 			}
 			break;
-			case HalfOfSmallestSize:
+			case SizeEight:
 			{
-				//Boundary_value = Boundary_value/2;
-				Boundary_value = 1;
+				Boundary_value = 8;
+			}
+			break;
+			case SizeFour:
+			{
+				Boundary_value = 4;
 			}
 			break;
 			case SizeTwo:
 			{
 				Boundary_value = 2;
+			}
+			break;
+			case SizeOne:
+			{
+				Boundary_value = 1;
 			}
 			break;
 			default:
@@ -694,9 +768,12 @@ public class RunFreightExample {
 
 	enum Plot {
 		SmallestSize,
-		HalfOfSmallestSize,
+		SizeEight,
+		SizeFour,
 		SizeTwo,
-		AverageOfTwoSmallestSize
+		SizeOne,
+
+
 	}
 
 	/**
@@ -724,24 +801,6 @@ public class RunFreightExample {
 		return destination;
 	}
 
-	/**
-	 * Berechnung des ggT zweier Zahlen
-	 * nach dem Euklidischen Algorithmus
-	 *
-	 * @param numb1 the already existing carrier
-	 * @param numb2 variable to sum up servicetime in the carrier
-	 * @return den gräßten gemeinsamen Teiler
-	 */
-	private static int ggt(int numb1, int numb2) {
-		while (numb2 != 0) {
-			if (numb1 > numb2) {
-				numb1 = numb1 - numb2;
-			} else {
-				numb2 = numb2 - numb1;
-			}
-		}
-		return numb1;
-	}
 
 
 
