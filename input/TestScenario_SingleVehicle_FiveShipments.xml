@@ -10,11 +10,11 @@
 		</capabilities>
 
 		<shipments>
-			<shipment id="228_edeka" from="59933" to="108280" size="26" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:18:00" deliveryServiceTime="01:18:00"/>
-			<shipment id="242_edeka" from="59933" to="104051" size="17" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:51:00" deliveryServiceTime="00:51:00"/>
-			<shipment id="252_edeka" from="59933" to="15863" size="17" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:51:00" deliveryServiceTime="00:51:00"/>
-			<shipment id="284_edeka" from="59933" to="143810" size="47" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="02:21:00" deliveryServiceTime="02:21:00"/>
-			<shipment id="268_edeka" from="59933" to="143950" size="13" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:39:00" deliveryServiceTime="00:39:00"/>
+			<shipment id="228_edeka" from="59933" to="108280" size="44" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="02:12:00" deliveryServiceTime="02:12:00"/>
+			<shipment id="242_edeka" from="59933" to="104051" size="4" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:12:00" deliveryServiceTime="00:12:00"/>
+			<shipment id="252_edeka" from="59933" to="15863" size="2" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:06:00" deliveryServiceTime="00:06:00"/>
+			<shipment id="284_edeka" from="59933" to="143810" size="5" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:15:00" deliveryServiceTime="00:15:00"/>
+			<shipment id="268_edeka" from="59933" to="143950" size="65" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="03:15:00" deliveryServiceTime="03:15:00"/>
 		</shipments>
 
 	</carrier>

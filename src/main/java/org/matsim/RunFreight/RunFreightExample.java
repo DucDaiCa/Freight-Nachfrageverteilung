@@ -73,13 +73,13 @@ public class RunFreightExample {
 			String inputPath = "./input/";
 			args = new String[] {
 					inputPath+ "TestScenario_SingleVehicle_FourShipments_Ver.A.xml",
-					inputPath + "VehicleTypes_26t_8t.xml",
-					"200",                                                    //only for demonstration.
+					inputPath + "VehicleTypes_26t_size24.xml",
+					"800",                                                    //only for demonstration.
 					"./output/Demo_Freight",
 			};
 		}
 
-		// extending xml name with the iteration (2)
+		// extending xml name with the iteration count (2)
 		xmlNameChangeID(args);
 
 
@@ -125,6 +125,7 @@ public class RunFreightExample {
 		// creating a list and arrange shipment size of the tour
 		shipmentSizeNumerator(scenario);
 
+		//count the runtime of Jsprit and MATSim
 		long start = System.nanoTime();
 
 		// Solving the VRP (generate carrier's tour plans)
@@ -171,6 +172,12 @@ public class RunFreightExample {
 		runTimeOutput(durationSec, durationMin, controler);
 	}
 
+	/**
+	 * method for distributing Shipments randomly to given locations
+	 *
+	 * @param args String array with arguments
+	 * @param scenario
+	 */
 	private static void randomShipmentDistribution(Scenario scenario, String[] args) {
 		int demand = 0;
 		Random random = new Random();
@@ -654,7 +661,7 @@ public class RunFreightExample {
 	}
 
 	/**
-	 * method for building new shipment with the new size
+	 * method for building new shipment with the new shipmenntsize
 	 *
 	 * @param size the "new" size for the shipments
 	 * @param carrier the already existing carrier

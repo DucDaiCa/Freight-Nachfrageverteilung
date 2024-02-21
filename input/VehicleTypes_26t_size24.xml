@@ -18,21 +18,4 @@
         <flowEfficiencyFactor factor="1.0"/>
     </vehicleType>
 
-    <vehicleType id="medium18t">
-        <description>Medium Vehicle 18t</description>
-        <capacity seats="1" standingRoomInPersons="0" other="16.0"> </capacity>
-        <length meter="7.5"/>
-        <width meter="1.0"/>
-        <engineInformation>
-            <attributes>
-                <attribute name="HbefaTechnology" class="java.lang.String">diesel</attribute>
-            </attributes>
-        </engineInformation>
-        <costInformation fixedCostsPerDay="80.47" costsPerMeter="6.5E-4" costsPerSecond="0.0049"> </costInformation>
-        <passengerCarEquivalents pce="1.0"/>
-        <networkMode networkMode="car"/>
-        <flowEfficiencyFactor factor="1.0"/>
-    </vehicleType>
-
-
 </vehicleDefinitions>
