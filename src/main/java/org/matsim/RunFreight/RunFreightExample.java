@@ -72,15 +72,15 @@ public class RunFreightExample {
 		if ( args.length==0 ) {
 			String inputPath = "./input/";
 			args = new String[] {
-					inputPath+ "TestScenario_SingleVehicle_FourShipments_Ver.A.xml",
+					inputPath+ "TestScenario_SingleVehicle_FiveShipments.xml",
 					inputPath + "VehicleTypes_26t_size24.xml",
-					"800",                                                    //only for demonstration.
+					"1000",                                                    //only for demonstration.
 					"./output/Demo_Freight",
 			};
 		}
 
 		// extending xml name with the iteration count (2)
-		xmlNameChangeID(args);
+		//xmlNameChangeID(args);
 
 
 		// ### config stuff: ###
@@ -94,7 +94,7 @@ public class RunFreightExample {
 		FreightUtils.loadCarriersAccordingToFreightConfig( scenario );
 
 		// changes Shipment sizes randomly (1) then comment code and uncomment (2) above
-		// randomShipmentDistribution(scenario,args);
+		randomShipmentDistribution(scenario,args);
 
 
 		// set # of jsprit iterations
@@ -179,47 +179,53 @@ public class RunFreightExample {
 	 * @param scenario
 	 */
 	private static void randomShipmentDistribution(Scenario scenario, String[] args) {
-		int demand = 0;
+		int numShipments = 0;
 		Random random = new Random();
-		Map<String, Integer> countDestination = new HashMap<>();
+
+		// um Orte und neue Anzahl von Sendungen zu speichern
+		Map<String, Integer> destinationShipments = new HashMap<>();
 
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()){
-			demand  = demand(carrier,demand);
+			numShipments  = numOfShipments(carrier,numShipments);
 
 			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
 
-				if(!countDestination.containsKey(carrierShipment.getTo().toString()));
+				if(!destinationShipments.containsKey(carrierShipment.getTo().toString()));
 				{
-					countDestination.put(carrierShipment.getTo().toString(),0);
+					destinationShipments.put(carrierShipment.getTo().toString(),0);
 				}
 			}
 
-			demand = demand - countDestination.size();
-			int numOfDestination = countDestination.size()-1;
+			numShipments = numShipments - destinationShipments.size();
+			int numOfDestination = destinationShipments.size()-1;
 
 			// random distribution on the HashMap entries
-			for (Map.Entry<String, Integer> entry : countDestination.entrySet()) {
-				int randomValue = random.nextInt(demand + 1); // Zufällige Zahl von 0 bis total
+			for (Map.Entry<String, Integer> entry : destinationShipments.entrySet()) {
 
+				// Zufällige Zahl von 0 bis total
+				int randomValue = random.nextInt(numShipments + 1);
+
+				// Schleife um zb. bei 4 Orten, 3 den zufälligen Anzahl von Sendungen zuzuteilen  und der 4te dann den Rest oder 1 Sendung)
 				if (numOfDestination != 0) {
-					//randomValue =23;
-					countDestination.put(entry.getKey(), randomValue+1);
 
-					demand -= randomValue;
-					//log.info("Gebe mir neuen demand aus: "+demand);
+					destinationShipments.put(entry.getKey(), randomValue+1);
+
+					numShipments -= randomValue;
+					//log.info("Gebe mir neuen demand aus: "+numShipments);
 					numOfDestination -= 1;
 					//log.info("Gebe mir neuen destinationlänge aus: "+numOfDestination);
 
 				} else {
-					countDestination.put(entry.getKey(), demand+1);
+
+					destinationShipments.put(entry.getKey(), numShipments+1);
 				}
 			}
 
 		}
-		//log.info("Gebe mir die HashMap der Zielorte aus: "+countDestination);
+		//log.info("Gebe mir die HashMap der Zielorte aus: "+destinationShipments);
 		for (var carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			for (var carrierShipment : carrier.getShipments().values()) {
-				for (Map.Entry<String, Integer> entry : countDestination.entrySet()) {
+				for (Map.Entry<String, Integer> entry : destinationShipments.entrySet()) {
 					if(entry.getKey().equals(carrierShipment.getTo().toString())) {
 
 						CarrierShipment newCarrierShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId(),CarrierShipment.class),
@@ -631,7 +637,7 @@ public class RunFreightExample {
 			double pickupServiceTimeAfter = 0.0;
 
 			// counting shipment demand, deliveryServiceTime, pickupServiceTime before making new shipments
-			demandBefore = demand(carrier,demandBefore);
+			demandBefore = numOfShipments(carrier,demandBefore);
 			deliveryServiceTimeBefore = sumServiceTime(carrier,deliveryServiceTimeBefore,1);
 			pickupServiceTimeBefore= sumServiceTime(carrier,pickupServiceTimeBefore,2);
 
@@ -649,7 +655,7 @@ public class RunFreightExample {
 			}
 
 			// counting shipment demand, deliveryServiceTime, pickupServiceTime after making the new shipments
-			demandAfter = demand(carrier,demandAfter);
+			demandAfter = numOfShipments(carrier,demandAfter);
 			deliveryServiceTimeAfter = sumServiceTime(carrier,deliveryServiceTimeAfter,1);
 			pickupServiceTimeAfter = sumServiceTime(carrier,pickupServiceTimeAfter,2);
 
@@ -737,7 +743,7 @@ public class RunFreightExample {
 	 * @param demand counter to sum up all shipments
 	 * @return the sum of the whole shipments
 	 */
-	private static int demand(Carrier carrier, int demand){
+	private static int numOfShipments(Carrier carrier, int demand){
 
 		for (CarrierShipment carrierShipment : carrier.getShipments().values()){
 			demand = demand + carrierShipment.getSize();
