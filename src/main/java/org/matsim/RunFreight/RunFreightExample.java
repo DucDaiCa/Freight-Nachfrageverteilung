@@ -82,7 +82,6 @@ public class RunFreightExample {
 		// extending xml name with the iteration count (2)
 		//xmlNameChangeID(args);
 
-
 		// ### config stuff: ###
 		Config config = prepareConfig(args);
 
@@ -125,6 +124,7 @@ public class RunFreightExample {
 		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;
 		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
 
+		//TODO: KMT: Warum machst du das? Diese Funktion gibt aktuell weder was aus, noch einen Wert zurück...
 		// creating a list and arrange shipment size of the tour
 		shipmentSizeNumerator(scenario);
 
@@ -151,8 +151,6 @@ public class RunFreightExample {
 											  bind(CarrierScoringFunctionFactory.class).toInstance(carrierScorer);
 										  }
 									  });
-
-
 
 		// ## Start of the MATSim-Run: ##
 		controler.run();
