@@ -93,8 +93,11 @@ public class RunFreightExample {
 		// load carriers according to freight config
 		FreightUtils.loadCarriersAccordingToFreightConfig( scenario );
 
+		// Die zufallsverteilung sollte mMn aus unabhängiger Schritt vorab erfolgen. Das macht es für
+		// dich einfacher die Übersicht zu behalten. Mit den daraus kommenden CarrierFiles kannst du dann
+		// in die Simulation gehen.
 		// changes Shipment sizes randomly (1) then comment code and uncomment (2) above
-		randomShipmentDistribution(scenario,args);
+		//CreateCarriersWithRandomDistribution.randomShipmentDistribution_fromDuc(scenario,args);
 
 
 		// set # of jsprit iterations
@@ -170,77 +173,6 @@ public class RunFreightExample {
 		tourDestinationCounter(controler.getControlerIO().getOutputPath());
 
 		runTimeOutput(durationSec, durationMin, controler);
-	}
-
-	/**
-	 * method for distributing Shipments randomly to given locations
-	 *
-	 * @param args String array with arguments
-	 * @param scenario
-	 */
-	private static void randomShipmentDistribution(Scenario scenario, String[] args) {
-		int numShipments = 0;
-		Random random = new Random();
-
-		// um Orte und neue Anzahl von Sendungen zu speichern
-		Map<String, Integer> destinationShipments = new HashMap<>();
-
-		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()){
-			numShipments  = numOfShipments(carrier,numShipments);
-
-			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
-
-				if(!destinationShipments.containsKey(carrierShipment.getTo().toString()));
-				{
-					destinationShipments.put(carrierShipment.getTo().toString(),0);
-				}
-			}
-
-			numShipments = numShipments - destinationShipments.size();
-			int numOfDestination = destinationShipments.size()-1;
-
-			// random distribution on the HashMap entries
-			for (Map.Entry<String, Integer> entry : destinationShipments.entrySet()) {
-
-				// Zufällige Zahl von 0 bis total
-				int randomValue = random.nextInt(numShipments + 1);
-
-				// Schleife um zb. bei 4 Orten, 3 den zufälligen Anzahl von Sendungen zuzuteilen  und der 4te dann den Rest oder 1 Sendung)
-				if (numOfDestination != 0) {
-
-					destinationShipments.put(entry.getKey(), randomValue+1);
-
-					numShipments -= randomValue;
-					//log.info("Gebe mir neuen demand aus: "+numShipments);
-					numOfDestination -= 1;
-					//log.info("Gebe mir neuen destinationlänge aus: "+numOfDestination);
-
-				} else {
-
-					destinationShipments.put(entry.getKey(), numShipments+1);
-				}
-			}
-
-		}
-		//log.info("Gebe mir die HashMap der Zielorte aus: "+destinationShipments);
-		for (var carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
-			for (var carrierShipment : carrier.getShipments().values()) {
-				for (Map.Entry<String, Integer> entry : destinationShipments.entrySet()) {
-					if(entry.getKey().equals(carrierShipment.getTo().toString())) {
-
-						CarrierShipment newCarrierShipment = CarrierShipment.Builder.newInstance(Id.create(carrierShipment.getId(),CarrierShipment.class),
-										carrierShipment.getFrom(), carrierShipment.getTo(), entry.getValue())
-								.setDeliveryServiceTime((double) entry.getValue()*180)
-								.setDeliveryTimeWindow(carrierShipment.getDeliveryTimeWindow())
-								.setPickupTimeWindow(carrierShipment.getPickupTimeWindow())
-								.setPickupServiceTime((double) entry.getValue()*180)
-								.build();
-						CarrierUtils.addShipment(carrier,newCarrierShipment);
-					}
-				}
-			}
-		}
-		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write(args[0]) ;
 	}
 
 	/**
@@ -743,7 +675,7 @@ public class RunFreightExample {
 	 * @param demand counter to sum up all shipments
 	 * @return the sum of the whole shipments
 	 */
-	private static int numOfShipments(Carrier carrier, int demand){
+	static int numOfShipments(Carrier carrier, int demand){
 
 		for (CarrierShipment carrierShipment : carrier.getShipments().values()){
 			demand = demand + carrierShipment.getSize();
