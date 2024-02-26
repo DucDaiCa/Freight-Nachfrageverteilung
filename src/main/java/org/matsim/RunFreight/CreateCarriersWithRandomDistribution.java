@@ -1,13 +1,9 @@
 package org.matsim.RunFreight;
 
-import com.graphhopper.jsprit.core.problem.job.Shipment;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Random;
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
 import org.matsim.contrib.freight.carrier.CarrierPlanWriter;
@@ -16,7 +12,6 @@ import org.matsim.contrib.freight.carrier.CarrierUtils;
 import org.matsim.contrib.freight.carrier.CarrierVehicle;
 import org.matsim.contrib.freight.carrier.Carriers;
 import org.matsim.contrib.freight.carrier.TimeWindow;
-import org.matsim.contrib.freight.controler.FreightUtils;
 import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
