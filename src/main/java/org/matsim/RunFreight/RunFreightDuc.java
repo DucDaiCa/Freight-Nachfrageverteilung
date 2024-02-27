@@ -79,94 +79,116 @@ public class RunFreightDuc {
 			};
 		}
 
+		int nuOfRuns = 2;
+		for(int i = 0; i < nuOfRuns; i++) {
+			String runId = String.valueOf(i);
+
 		// extending xml name with the iteration count (2)
 		xmlNameChangeID(args);
 
-		// ### config stuff: ###
-		Config config = prepareConfig(args);
+      // ### config stuff: ###
+      Config config = prepareConfig(args, runId);
 
-		// load scenario (this is not loading the freight material):
-		org.matsim.api.core.v01.Scenario scenario = ScenarioUtils.loadScenario( config );
+      // load scenario (this is not loading the freight material):
+      org.matsim.api.core.v01.Scenario scenario = ScenarioUtils.loadScenario(config);
+
+      // load carriers according to freight config
+      FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
+
+      // Die zufallsverteilung sollte mMn aus unabhängiger Schritt vorab erfolgen. Das macht es für
+      // dich einfacher die Übersicht zu behalten. Mit den daraus kommenden CarrierFiles kannst du
+      // dann
+      // in die Simulation gehen.
+      // changes Shipment sizes randomly (1) then comment code and uncomment (2) above
+      // CreateCarriersWithRandomDistribution.randomShipmentDistribution_fromDuc(scenario,args);
+
+      // set # of jsprit iterations
+      for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
+        log.warn(
+            "Overwriting the number of jsprit iterations for carrier: "
+                + carrier.getId()
+                + ". Value was before "
+                + CarrierUtils.getJspritIterations(carrier)
+                + "and is now "
+                + nuOfJspritIteration);
+        CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
+      }
+
+      // Write out the original carriers file - before any modification is done
+      new CarrierPlanWriter(FreightUtils.getCarriers(scenario))
+          .write("output/originalCarriers_Run"+runId+".xml");
+
+      // how to set the capacity of the "light" vehicle type to "25":
+      // FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light",
+      // VehicleType.class ) ).getCapacity().setOther( 25 );
+
+      // What vehicle types do we have
+      // for(VehicleType vehicleType :
+      // FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
+      //	log.info(vehicleType.getId()+": "+vehicleType.getCapacity().getOther());
+      // }
+
+      // Hier geschieht der Hauptteil der Arbeit: Das Aufteilen der Shipments :)
+      changeShipmentSize(scenario);
+
+      // output before jsprit run (not necessary)
+      new CarrierPlanWriter(FreightUtils.getCarriers(scenario))
+          .write("output/jsprit_unplannedCarriers_Run"+runId+".xml");
+      // (this will go into the standard "output" directory.  note that this may be removed if this
+      // is also used as the configured output dir.)
 
 
-		// load carriers according to freight config
-		FreightUtils.loadCarriersAccordingToFreightConfig( scenario );
+      // count the runtime of Jsprit and MATSim
+      long start = System.nanoTime();
 
-		// Die zufallsverteilung sollte mMn aus unabhängiger Schritt vorab erfolgen. Das macht es für
-		// dich einfacher die Übersicht zu behalten. Mit den daraus kommenden CarrierFiles kannst du dann
-		// in die Simulation gehen.
-		// changes Shipment sizes randomly (1) then comment code and uncomment (2) above
-		//CreateCarriersWithRandomDistribution.randomShipmentDistribution_fromDuc(scenario,args);
+      // Solving the VRP (generate carrier's tour plans)
+      FreightUtils.runJsprit(scenario);
 
+      long end = System.nanoTime();
+      double durationSec = (end - start) / 1e9;
+      double durationMin = (end - start) / (1e9 * 60);
+      // System.out.println("Zeit: "+durationMS+" s");
 
-		// set # of jsprit iterations
-		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
-			log.warn("Overwriting the number of jsprit iterations for carrier: " + carrier.getId() + ". Value was before " +CarrierUtils.getJspritIterations(carrier) + " and is now " + nuOfJspritIteration);
-			CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
+      // ## MATSim configuration:  ##
+      final Controler controler = new Controler(scenario);
+      controler.addOverridingModule(new CarrierModule());
+      controler.addOverridingModule(
+          new AbstractModule() {
+            @Override
+            public void install() {
+              final MyEventBasedCarrierScorer carrierScorer = new MyEventBasedCarrierScorer();
+
+              bind(CarrierScoringFunctionFactory.class).toInstance(carrierScorer);
+            }
+          });
+
+      // ## Start of the MATSim-Run: ##
+      controler.run();
+
+      // Creating the Analysis files
+      RunFreightAnalysisEventbased FreightAnalysis =
+          new RunFreightAnalysisEventbased(
+              controler.getControlerIO().getOutputPath(),
+              controler.getControlerIO().getOutputPath() + "/analyze");
+      try {
+        FreightAnalysis.runAnalysis();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
+      // Output after jsprit run (not necessary)
+			//TODO Warum schreibst du den nochmal raus. der müsste doch schon in den normalen output_* Dateien drinnen sein? Kai' feb 24
+      new CarrierPlanWriter(FreightUtils.getCarriers(scenario))
+          .write(
+              controler.getControlerIO().getOutputPath() + "/analyze/jsprit_plannedCarriers.xml");
+      // (this will go into the standard "output" directory.  note that this may be removed if this
+      // is also used as the configured output dir.)
+
+      // Output the number of destination approaches of the tour
+      tourDestinationCounter(controler.getControlerIO().getOutputPath());
+
+      runTimeOutput(durationSec, durationMin, controler);
 		}
-
-		// Write out the original carriers file - before any modification is done
-		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/originalCarriers.xml" ) ;
-
-		// how to set the capacity of the "light" vehicle type to "25":
-		//FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 25 );
-
-		// What vehicle types do we have
-		//for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
-		//	log.info(vehicleType.getId()+": "+vehicleType.getCapacity().getOther());
-		//}
-
-		//Hier geschieht der Hauptteil der Arbeit: Das Aufteilen der Shipments :)
-		changeShipmentSize(scenario);
-
-
-		// output before jsprit run (not necessary)
-		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;
-		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
-
-		//count the runtime of Jsprit and MATSim
-		long start = System.nanoTime();
-
-		// Solving the VRP (generate carrier's tour plans)
-		FreightUtils.runJsprit( scenario );
-
-		long end = System.nanoTime();
-		double durationSec = (end-start)/1e9;
-		double durationMin = (end-start)/(1e9*60);
-		//System.out.println("Zeit: "+durationMS+" s");
-
-
-		// ## MATSim configuration:  ##
-		final Controler controler = new Controler( scenario ) ;
-		controler.addOverridingModule(new CarrierModule() );
-		controler.addOverridingModule(new AbstractModule() {
-										  @Override
-										  public void install() {
-											  final MyEventBasedCarrierScorer carrierScorer = new MyEventBasedCarrierScorer();
-
-											  bind(CarrierScoringFunctionFactory.class).toInstance(carrierScorer);
-										  }
-									  });
-
-		// ## Start of the MATSim-Run: ##
-		controler.run();
-
-		// Creating the Analysis files
-		RunFreightAnalysisEventbased FreightAnalysis = new RunFreightAnalysisEventbased(controler.getControlerIO().getOutputPath(),controler.getControlerIO().getOutputPath()+"/analyze");
-		try {
-			FreightAnalysis.runAnalysis();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-
-		// Output after jsprit run (not necessary)
-		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( controler.getControlerIO().getOutputPath()+"/analyze/jsprit_plannedCarriers.xml" ) ;
-		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
-
-		//Output the number of destination approaches of the tour
-		tourDestinationCounter(controler.getControlerIO().getOutputPath());
-
-		runTimeOutput(durationSec, durationMin, controler);
 	}
 
 	/**
@@ -414,12 +436,12 @@ public class RunFreightDuc {
 		}
 
 
-	private static Config prepareConfig(String[] args) {
+	private static Config prepareConfig(String[] args, String runId) {
 		Config config = ConfigUtils.createConfig();
 
 		config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
 		// more general settings
-		config.controler().setOutputDirectory(args[3]);
+		config.controler().setOutputDirectory(args[3] + "/" + runid);
 		config.controler().setLastIteration(0 );		// yyyyyy iterations currently do not work; needs to be fixed.  (Internal discussion at end of file.)
 		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 
