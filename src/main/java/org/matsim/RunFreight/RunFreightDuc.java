@@ -57,9 +57,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-public class RunFreightExample {
+public class RunFreightDuc {
 
-	private static final Logger log = LogManager.getLogger(RunFreightExample.class);
+	private static final Logger log = LogManager.getLogger(RunFreightDuc.class);
 
 	private static int nuOfJspritIteration;
 
@@ -72,15 +72,15 @@ public class RunFreightExample {
 		if ( args.length==0 ) {
 			String inputPath = "./input/";
 			args = new String[] {
-					inputPath+ "TestScenario_SingleVehicle_FiveShipments.xml",
+					inputPath+ "RandomCarriers_5_RS1711.xml",
 					inputPath + "VehicleTypes_26t_size24.xml",
-					"1000",                                                    //only for demonstration.
+					"100",                                                    //only for demonstration.
 					"./output/Demo_Freight",
 			};
 		}
 
 		// extending xml name with the iteration count (2)
-		//xmlNameChangeID(args);
+		xmlNameChangeID(args);
 
 		// ### config stuff: ###
 		Config config = prepareConfig(args);
@@ -101,7 +101,7 @@ public class RunFreightExample {
 
 		// set # of jsprit iterations
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
-			log.warn("Overwriting the number of jsprit iterations for carrier: " + carrier.getId() + ". Value was before " +CarrierUtils.getJspritIterations(carrier) + "and is now " + nuOfJspritIteration);
+			log.warn("Overwriting the number of jsprit iterations for carrier: " + carrier.getId() + ". Value was before " +CarrierUtils.getJspritIterations(carrier) + " and is now " + nuOfJspritIteration);
 			CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
 		}
 
@@ -123,10 +123,6 @@ public class RunFreightExample {
 		// output before jsprit run (not necessary)
 		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;
 		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
-
-		//TODO: KMT: Warum machst du das? Diese Funktion gibt aktuell weder was aus, noch einen Wert zurück...
-		// creating a list and arrange shipment size of the tour
-		shipmentSizeNumerator(scenario);
 
 		//count the runtime of Jsprit and MATSim
 		long start = System.nanoTime();
@@ -284,6 +280,8 @@ public class RunFreightExample {
 			// HashMap to store destination and its count
 			HashMap<String, Integer> destinationCountMap = new HashMap<>();
 
+			HashMap<String,Integer> countShipmentToDestination = new HashMap<>();
+
 			// new file object
 			File file = new File(outpath+"/analyze/TourDestination_Carrier.txt");
 
@@ -293,7 +291,7 @@ public class RunFreightExample {
 				if (tourNode.getNodeType() == Node.ELEMENT_NODE) {
 					HashMap<String, Integer>  counter = new HashMap<>(); // so that he won't count the same destination more than once for a tour
 					nullHashMapBuilder(doc,counter);
-					HashMap<String, Integer> tourDestinationCounter = new HashMap<>(); //counting  right amount of shipments destinations for the every tour
+					HashMap<String, Integer> tourDestinationCounter = new HashMap<>(); //counting right amount of shipments destinations for the every tour
 					Element tourElement = (Element) tourNode;
 					NodeList actList = tourElement.getElementsByTagName("act");
 					int actCount = actList.getLength();
@@ -324,23 +322,35 @@ public class RunFreightExample {
 
 								if ( tourDestinationCounter.containsKey(destination) ) {
 
-									int counte = tourDestinationCounter.get(destination);
-									tourDestinationCounter.put(destination, counte + 1);
+									int countShip1 = tourDestinationCounter.get(destination);
+									tourDestinationCounter.put(destination, countShip1 + 1);
 
 								} else{
 									tourDestinationCounter.put(destination, 1);
 								}
 
+								if ( countShipmentToDestination.containsKey(destination)) {
+
+									int countShip2 = countShipmentToDestination.get(destination);
+									countShipmentToDestination.put(destination, countShip2+1);
+
+								}else{
+									countShipmentToDestination.put(destination,1);
+								}
+
+
 							}
 						}
 					}
 					System.out.println("Zielorte der Fahrt: "+tourDestinationCounter);
-					//OutputTourDestination(tourDestinationCounter,1,file);
 				}
 			}
 
-			// Prints the destinations and their counts
-			outputTourDestination(destinationCountMap,2,file);
+			// prints how many shipments need to be delivered to the respective location
+			System.out.println("\nAnzahl Sendungen zum jeweiligem Ort: "+ countShipmentToDestination+"\n" );
+
+			// prints the destinations and how often the place was stopped
+			outputTourDestination(destinationCountMap,file);
 			for (Map.Entry<String, Integer> entries : destinationCountMap.entrySet()) {
 				System.out.println("Zielort: " + entries.getKey() + "  \t   Wie oft hingefahren: " + entries.getValue());
 			}
@@ -354,41 +364,10 @@ public class RunFreightExample {
 	 *
 	 * @param map HashMap with the information
 	 */
-	private static void outputTourDestination(HashMap<String,Integer> map, int num, File file ){
+	private static void outputTourDestination(HashMap<String,Integer> map, File file ){
 
 		BufferedWriter bf = null;
-		switch(num) {
-			case 1: {
-				try {
 
-					// create new BufferedWriter for the output file
-					bf = new BufferedWriter(new FileWriter(file));
-					// iterate map entries
-					for (Map.Entry<String, Integer> entry :
-							map.entrySet()) {
-
-						// put key and value separated by a colon
-						bf.write("Zielorte der Fahrt: "+map);
-
-						// new line
-						bf.newLine();
-					}
-
-					bf.flush();
-				} catch (IOException e) {
-					e.printStackTrace();
-				} finally {
-
-					try {
-
-						// close the writer
-						bf.close();
-					} catch (Exception e) {
-					}
-				}
-			}
-			break;
-			case 2:{
 				try {
 
 					// create new BufferedWriter for the output file
@@ -417,46 +396,9 @@ public class RunFreightExample {
 					} catch (Exception e) {
 					}
 				}
-			}
-			break;
-		}
+
 	}
 
-	/**
-	 * method to output the shipment sizes in a HashMap
-	 *
-	 */
-	private static void shipmentSizeNumerator(Scenario scenario) {
-		LinkedList<Integer> shipmentSizes = new LinkedList<>();
-		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
-			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
-				shipmentSizes.add(carrierShipment.getSize());
-			}
-		}
-		Collections.sort(shipmentSizes);
-		//log.info("Gib mir die Größe von dem Shipments aus: " + shipmentSizes);
-
-		Map<Integer, Integer> countMap = countOccurrences(shipmentSizes);
-
-		// sort by key
-		Map<Integer, Integer> sortCountMap = new TreeMap<Integer, Integer>(countMap);
-
-		// Output shipment size occur
-		//log.info(sortCountMap.entrySet());
-		/*for (Map.Entry<Integer, Integer> entry : countMap.entrySet()) {
-			System.out.println("Number " + entry.getKey() + " occurs " + entry.getValue() + " times.");
-		}*/
-	}
-
-		public static Map<Integer, Integer> countOccurrences(LinkedList<Integer> linkedList) {
-			Map<Integer, Integer> countMap = new HashMap<>();
-
-			for (Integer number : linkedList) {
-				countMap.put(number, countMap.getOrDefault(number, 0) + 1);
-			}
-
-			return countMap;
-		}
 
 		private static void nullHashMapBuilder(Document doc,HashMap hashMap){
 		NodeList shipmentList = doc.getElementsByTagName("shipment");
