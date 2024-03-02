@@ -63,6 +63,21 @@ public class RunFreightDuc {
 
 	private static int nuOfJspritIteration;
 
+	//TODO: Ein paar generelle Anmerkungen von mir (KMT) - von schneller Durchsicht. Kein anspruch auf Vollständigkeit-
+	// 1.) Bitte mal aufräumen und alles nicht notwendige raus werfen. -> erhöht massiv die Übersichtlichkeit
+	// 2.) Interne Methoden/Funktionen "private" machen.
+	// 3.) Auch Kommentare von mir weiter unten ansehen
+	// 4.) Empfehlung: Mache die Bezichnugn des Outputs von deinen Settings abhängig.
+	// Dann kommt man später nicht so leicht durcheinander was eingestellt wurde.
+	// 5.) Alle Settings möglichst weit nach oben!
+	// 6.) Schreibe dir doch entsprechend von dir hinzugefügte Infois/Analysen, die du bracuhst nicht nur
+	// in die Konsole (System.out.println(..) sondern in eine entsprechende Datei, sodass du es dann gut übernehmen kannst
+	// 7.) Eventuell hilft es auch, wenn einige Hilfs/Analyse-Methoden in eine andere Klasse verschoben werden
+	// 8.) Gerne in Methoden im Javadoc Kommentar auch angeben, warum etwas gemacht wird.
+	// 9.) Mal bitte schauen, ob Bennungen sinnvoll sind. z.B: ist Plot "zeichnen" aber bei dir das Setting der Aufteilung.
+	// ....
+
+
 	public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
 
 		for (String arg : args) {
@@ -193,6 +208,7 @@ public class RunFreightDuc {
 
 	/**
 	 * renames the ID names of a xml file
+	 * //TODO Warum? Was soll da aktualisiert werden? ISt derzeit eh nicht in Verwendung.
 	 *
 	 * @param args String array with arguments
 	 */
@@ -441,7 +457,7 @@ public class RunFreightDuc {
 
 		config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
 		// more general settings
-		config.controler().setOutputDirectory(args[3] + "/" + runid);
+		config.controler().setOutputDirectory(args[3] + "/Run" +runId);
 		config.controler().setLastIteration(0 );		// yyyyyy iterations currently do not work; needs to be fixed.  (Internal discussion at end of file.)
 		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 
@@ -473,6 +489,8 @@ public class RunFreightDuc {
 			 *//*
 		}*/
 
+		//Todo: So eine generelle Einstellung sollte mMn sehr weit nach oben gehen. Aus meiner Sicht kann
+		//dann das Setting auch der Methode übergeben werden (muss aber nicht).
 		Plot mySelection =  Plot.SizeOne;
 		double Boundary_value = Double.MAX_VALUE;
 		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
@@ -673,6 +691,8 @@ public class RunFreightDuc {
 		return serviceTime;
 	}
 
+	//TODO: 1.) Plot heißt übersetzt "zeichnen". Das passt hier leider gar nicht.
+	//Todo: 2.) Aus meiner Sich müsste noch eine Option "lasse es wie es ist" mit rein und entsprechend implentiert werden.
 	enum Plot {
 		SmallestSize,
 		SizeEight,
