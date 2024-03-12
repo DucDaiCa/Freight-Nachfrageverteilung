@@ -24,7 +24,7 @@ public class CreateCarriersWithRandomDistribution {
   public static void main(String[] args){
     final int nuOfDestinations = 4; // 4 oder 5 nach deine Wahl
     final int nuOfJobsToCreate = nuOfDestinations * 24;
-    final int randomSeed = 1711; //Damit bei mehrfacher Ausführung jeweils die gleichen Daten gezogen werden.
+    final int randomSeed = 3711; //Damit bei mehrfacher Ausführung jeweils die gleichen Daten gezogen werden.
     createCarrierWithRandomDistribution(nuOfJobsToCreate, nuOfDestinations, randomSeed);
   }
 

@@ -87,19 +87,20 @@ public class RunFreightDuc {
 		if ( args.length==0 ) {
 			String inputPath = "./input/";
 			args = new String[] {
-					inputPath+ "RandomCarriers_5_RS1711.xml",
-					inputPath + "VehicleTypes_26t_size24.xml",
-					"100",                                                    //only for demonstration.
-					"./output/Demo_Freight",
+					inputPath+ "RandomCarriers_4_RS3711.xml",
+					inputPath + "VehicleTypes_26t_Size24.xml",
+					"10",
+					"./output/Test_Freight",
 			};
 		}
 
-		int nuOfRuns = 2;
-		for(int i = 0; i < nuOfRuns; i++) {
-			String runId = String.valueOf(i);
-
 		// extending xml name with the iteration count (2)
 		xmlNameChangeID(args);
+
+		int nuOfRuns = 10;
+		for(int i = 0; i < nuOfRuns; i++) {
+			String runId = String.valueOf(i+1);
+
 
       // ### config stuff: ###
       Config config = prepareConfig(args, runId);
@@ -124,7 +125,7 @@ public class RunFreightDuc {
                 + carrier.getId()
                 + ". Value was before "
                 + CarrierUtils.getJspritIterations(carrier)
-                + "and is now "
+                + " and is now "
                 + nuOfJspritIteration);
         CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
       }
@@ -133,18 +134,9 @@ public class RunFreightDuc {
       new CarrierPlanWriter(FreightUtils.getCarriers(scenario))
           .write("output/originalCarriers_Run"+runId+".xml");
 
-      // how to set the capacity of the "light" vehicle type to "25":
-      // FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light",
-      // VehicleType.class ) ).getCapacity().setOther( 25 );
-
-      // What vehicle types do we have
-      // for(VehicleType vehicleType :
-      // FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()) {
-      //	log.info(vehicleType.getId()+": "+vehicleType.getCapacity().getOther());
-      // }
-
       // Hier geschieht der Hauptteil der Arbeit: Das Aufteilen der Shipments :)
-      changeShipmentSize(scenario);
+		Divide sizeSelection = Divide.SizeOne;
+      changeShipmentSize(scenario, sizeSelection);
 
       // output before jsprit run (not necessary)
       new CarrierPlanWriter(FreightUtils.getCarriers(scenario))
@@ -180,6 +172,7 @@ public class RunFreightDuc {
       // ## Start of the MATSim-Run: ##
       controler.run();
 
+	  // hier geschieht die Analyse der Arbeit
       // Creating the Analysis files
       RunFreightAnalysisEventbased FreightAnalysis =
           new RunFreightAnalysisEventbased(
@@ -196,14 +189,52 @@ public class RunFreightDuc {
       new CarrierPlanWriter(FreightUtils.getCarriers(scenario))
           .write(
               controler.getControlerIO().getOutputPath() + "/analyze/jsprit_plannedCarriers.xml");
-      // (this will go into the standard "output" directory.  note that this may be removed if this
-      // is also used as the configured output dir.)
 
       // Output the number of destination approaches of the tour
       tourDestinationCounter(controler.getControlerIO().getOutputPath());
 
       runTimeOutput(durationSec, durationMin, controler);
 		}
+	}
+
+	/**
+	 * method for breaking up Shipments into smaller ones
+	 */
+	private static void changeShipmentSize(org.matsim.api.core.v01.Scenario scenario, Divide sizeSelection) {
+
+		//Todo: So eine generelle Einstellung sollte mMn sehr weit nach oben gehen. Aus meiner Sicht kann
+		//dann das Setting auch der Methode übergeben werden (muss aber nicht).
+		//Divide mySelection =  Divide.SizeOne;
+		double Boundary_value = Double.MAX_VALUE;
+		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
+			if(vehicleType.getCapacity().getOther() < Boundary_value)
+			{
+				Boundary_value = vehicleType.getCapacity().getOther();
+			}
+		}
+
+		switch (sizeSelection) {
+			case StandardSize -> {
+				// Sendungsgröße wird nicht verändert
+			}
+			case SizeEight -> {
+				Boundary_value = 8;
+			}
+			case SizeFour -> {
+				Boundary_value = 4;
+			}
+			case SizeTwo -> {
+				Boundary_value = 2;
+			}
+			case SizeOne -> {
+				Boundary_value = 1;
+			}
+			default -> throw new IllegalStateException("Unexpected value: " + sizeSelection);
+		}
+
+		// method to create new shipments ( hier werden die Shipments aufgeteilt und neu erstellt )
+		createShipment(scenario, (int) Boundary_value);
+
 	}
 
 	/**
@@ -263,44 +294,26 @@ public class RunFreightDuc {
 		}
 	}
 
-	/**
-	 * writing the runtime in a txt file
-	 *
-	 * @param durationSec time in seconds
-	 * @param durationMin time in minutes
-	 */
-	private static void runTimeOutput(double durationSec, double durationMin, Controler controler) {
-		File runTimeFile = new File(controler.getControlerIO().getOutputPath()+"/analyze/runTimeFile.txt");
-		BufferedWriter buffer = null;
-		try {
+	private static Config prepareConfig(String[] args, String runId) {
+		Config config = ConfigUtils.createConfig();
 
-			// create new BufferedWriter for the output file
-			buffer = new BufferedWriter(new FileWriter(runTimeFile));
+		config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
+		// more general settings
+		config.controler().setOutputDirectory(args[3] + "/Run" +runId);
+		config.controler().setLastIteration(0 );		// yyyyyy iterations currently do not work; needs to be fixed.  (Internal discussion at end of file.)
+		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 
+		// freight settings
+		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightConfigGroup.class ) ;
+		freightConfigGroup.setCarriersFile(args[0]);
+		freightConfigGroup.setCarriersVehicleTypesFile(args[1]);
 
-			// put key and value separated by a tab
-			buffer.write("Die Laufzeit des Szenarios beträgt: "+ durationSec +" s \t  "+ durationMin +" min");
-
-			// new line
-			buffer.newLine();
-
-
-			buffer.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-
-			try {
-
-				// close the writer
-				buffer.close();
-			} catch (Exception e) {
-			}
-		}
+		nuOfJspritIteration = Integer.parseInt(args[2]);
+		return config;
 	}
 
 	/**
-	 * counts how often a destination was driven to as part of a tour
+	 * counts how often a destination was driven to... as part of a tour
 	 *
 	 * @param outpath path of the folder
 	 */
@@ -316,12 +329,14 @@ public class RunFreightDuc {
 			int tourCount = tourList.getLength();
 
 			// HashMap to store destination and its count
-			HashMap<String, Integer> destinationCountMap = new HashMap<>();
+			HashMap<String, Integer> DrivenToDestination = new HashMap<>();
 
 			HashMap<String,Integer> countShipmentToDestination = new HashMap<>();
 
-			// new file object
-			File file = new File(outpath+"/analyze/TourDestination_Carrier.txt");
+			// new file objects
+			File fileDestination = new File(outpath+"/analyze/Destination_Carrier.txt");
+			File fileShipmentsPerDestination = new File(outpath+"/analyze/ShipmentsPerDestination.txt");
+			File fileDestinationPerTour = new File(outpath+"/analyze/DestinationPerTour.txt");
 
 			for (int i = 0; i < tourCount; i++) {
 				Node tourNode = tourList.item(i);
@@ -330,6 +345,7 @@ public class RunFreightDuc {
 					HashMap<String, Integer>  counter = new HashMap<>(); // so that he won't count the same destination more than once for a tour
 					nullHashMapBuilder(doc,counter);
 					HashMap<String, Integer> tourDestinationCounter = new HashMap<>(); //counting right amount of shipments destinations for the every tour
+
 					Element tourElement = (Element) tourNode;
 					NodeList actList = tourElement.getElementsByTagName("act");
 					int actCount = actList.getLength();
@@ -346,15 +362,15 @@ public class RunFreightDuc {
 								String destination = getDestinationFromShipmentId(doc, shipmentId);
 
 								// Update the count for the destination
-								if (destinationCountMap.containsKey(destination) ) {
+								if (DrivenToDestination.containsKey(destination) ) {
 
 									if(counter.get(destination)== 0) {
-										int count = destinationCountMap.get(destination);
-										destinationCountMap.put(destination, count + 1);
+										int count = DrivenToDestination.get(destination);
+										DrivenToDestination.put(destination, count + 1);
 										counter.put(destination, 1);
 									}
 								} else {
-									destinationCountMap.put(destination, 1);
+									DrivenToDestination.put(destination, 1);
 									counter.put(destination, 1);
 								}
 
@@ -380,16 +396,19 @@ public class RunFreightDuc {
 							}
 						}
 					}
+					// writes in a file the shipments for every tour for the scenario
 					System.out.println("Zielorte der Fahrt: "+tourDestinationCounter);
+					outputTourDestination(tourDestinationCounter,fileDestinationPerTour,2);
 				}
 			}
 
-			// prints how many shipments need to be delivered to the respective location
+			// writes in a file how many shipments need to be delivered to the respective location
+			outputTourDestination(countShipmentToDestination,fileShipmentsPerDestination,3);
 			System.out.println("\nAnzahl Sendungen zum jeweiligem Ort: "+ countShipmentToDestination+"\n" );
 
-			// prints the destinations and how often the place was stopped
-			outputTourDestination(destinationCountMap,file);
-			for (Map.Entry<String, Integer> entries : destinationCountMap.entrySet()) {
+			// writes in a file the destinations and how often the place was stopped
+			outputTourDestination(DrivenToDestination,fileDestination,1);
+			for (Map.Entry<String, Integer> entries : DrivenToDestination.entrySet()) {
 				System.out.println("Zielort: " + entries.getKey() + "  \t   Wie oft hingefahren: " + entries.getValue());
 			}
 		} catch (Exception e) {
@@ -402,10 +421,20 @@ public class RunFreightDuc {
 	 *
 	 * @param map HashMap with the information
 	 */
-	private static void outputTourDestination(HashMap<String,Integer> map, File file ){
+	private static void outputTourDestination(HashMap<String,Integer> map, File file, int num ){
 
 		BufferedWriter bf = null;
 
+		// "108280", "104051", "15863", "143950", "143810"
+		HashMap<String,String> destinationNames = new HashMap<>();
+		destinationNames.put("108280","Hellersdorf");
+		destinationNames.put("104051","Westend");
+		destinationNames.put("15863","Blankenburg");
+		destinationNames.put("143950","Wannsee");
+		destinationNames.put("143810","Reinickendorf");
+
+		switch(num) {
+			case 1: {
 				try {
 
 					// create new BufferedWriter for the output file
@@ -416,8 +445,8 @@ public class RunFreightDuc {
 							map.entrySet()) {
 
 						// put key and value separated by a colon
-						bf.write("Zielort: "+entry.getKey() + "  \t   Wie oft hingefahren: " + entry.getValue());
-
+						//bf.write("Zielort: " + entry.getKey() + "  \t   Wie oft hingefahren: " + entry.getValue());
+						bf.write("Zielort: " + entry.getKey() + "  \t   Wie oft zu "+destinationNames.get(entry.getKey())+" hingefahren: " + entry.getValue());
 						// new line
 						bf.newLine();
 					}
@@ -434,7 +463,63 @@ public class RunFreightDuc {
 					} catch (Exception e) {
 					}
 				}
+			}
+			break;
+			case 2: {
+				try {
 
+					// create new BufferedWriter for the output file
+
+					bf = new BufferedWriter(new FileWriter(file, true));
+
+					bf.write("Zielorte der Tour  : \t  "+map);
+
+
+					bf.newLine();
+
+					bf.flush();
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally {
+
+					try {
+						// close the writer
+						bf.close();
+					} catch (Exception e) {
+					}
+				}
+			}
+			break;
+			case 3: {
+				try {
+
+					// create new BufferedWriter for the output file
+					bf = new BufferedWriter(new FileWriter(file));
+
+					// iterate map entries
+					for (Map.Entry<String, Integer> entry :
+							map.entrySet()) {
+
+						bf.write("Zielort: " + entry.getKey() + "  \t  Anzahl Sendungen für "+destinationNames.get(entry.getKey())+": " + entry.getValue());
+
+
+						bf.newLine();
+					}
+
+					bf.flush();
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally {
+
+					try {
+						// close the writer
+						bf.close();
+					} catch (Exception e) {
+					}
+				}
+			}
+			break;
+		}
 	}
 
 
@@ -452,89 +537,11 @@ public class RunFreightDuc {
 		}
 
 
-	private static Config prepareConfig(String[] args, String runId) {
-		Config config = ConfigUtils.createConfig();
-
-		config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
-		// more general settings
-		config.controler().setOutputDirectory(args[3] + "/Run" +runId);
-		config.controler().setLastIteration(0 );		// yyyyyy iterations currently do not work; needs to be fixed.  (Internal discussion at end of file.)
-		config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-
-		// freight settings
-		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightConfigGroup.class ) ;
-		freightConfigGroup.setCarriersFile(args[0]);
-		freightConfigGroup.setCarriersVehicleTypesFile(args[1]);
-
-		nuOfJspritIteration = Integer.parseInt(args[2]);
-		return config;
-	}
-
-//ZUI
 	/**
-	 * method for breaking up Shipments into smaller ones
+	 * Building the new shipments
+	 *
+	 * @param Boundary_value value of the new shiopment size
 	 */
-	private static void changeShipmentSize(org.matsim.api.core.v01.Scenario scenario) {
-
-		/*// changing shipment size of existing shipment
-		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
-			CarrierUtils.setJspritIterations(carrier,5);
-			 *//*
-			for (CarrierShipment carrierShipment : carrier.getShipments().values()) {
-				int size = carrierShipment.getSize()*2;
-
-				CarrierShipment newShipment = createShipment(carrierShipment, 0, size);
-				CarrierUtils.addShipment(carrier,newShipment); //add the new shipment to the carrier
-			}
-			 *//*
-		}*/
-
-		//Todo: So eine generelle Einstellung sollte mMn sehr weit nach oben gehen. Aus meiner Sicht kann
-		//dann das Setting auch der Methode übergeben werden (muss aber nicht).
-		Plot mySelection =  Plot.SizeOne;
-		double Boundary_value = Double.MAX_VALUE;
-		for(VehicleType vehicleType : FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values()){
-			if(vehicleType.getCapacity().getOther() < Boundary_value)
-			{
-				Boundary_value = vehicleType.getCapacity().getOther();
-			}
-		}
-
-		switch (mySelection) {
-			case SmallestSize:
-			{
-				//size of the smallest vehicle to break up the shipment into smaller chunks
-			}
-			break;
-			case SizeEight:
-			{
-				Boundary_value = 8;
-			}
-			break;
-			case SizeFour:
-			{
-				Boundary_value = 4;
-			}
-			break;
-			case SizeTwo:
-			{
-				Boundary_value = 2;
-			}
-			break;
-			case SizeOne:
-			{
-				Boundary_value = 1;
-			}
-			break;
-			default:
-				throw new IllegalStateException("Unexpected value: " + mySelection);
-		}
-
-		// method to create new shipments ( hier werden die Shipments aufgeteilt und neu erstellt )
-		createShipment(scenario, (int) Boundary_value);
-
-	}
-
 	private static void createShipment(Scenario scenario, int Boundary_value) {
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 
@@ -579,7 +586,7 @@ public class RunFreightDuc {
 	}
 
 	/**
-	 * method for building new shipment with the new shipmenntsize
+	 * the shipment builder
 	 *
 	 * @param size the "new" size for the shipments
 	 * @param carrier the already existing carrier
@@ -619,7 +626,7 @@ public class RunFreightDuc {
 	}
 
 	/**
-	 * method for creating new Shipments
+	 * method for creating the new Shipments
 	 *
 	 * @param carrierShipment the shipment
 	 * @param id id of the shipment
@@ -667,7 +674,7 @@ public class RunFreightDuc {
 	 * method for counting sizes/demand of all Shipments
 	 *
 	 * @param carrier the already existing carrier
-	 * @param serviceTime variable to sum up servicetime in the carrier
+	 * @param serviceTime variable to sum up service time
 	 * @param num variable to decide if sum up delivery or pickup service time
 	 * @return the sum of the whole shipments
 	 */
@@ -693,8 +700,8 @@ public class RunFreightDuc {
 
 	//TODO: 1.) Plot heißt übersetzt "zeichnen". Das passt hier leider gar nicht.
 	//Todo: 2.) Aus meiner Sich müsste noch eine Option "lasse es wie es ist" mit rein und entsprechend implentiert werden.
-	enum Plot {
-		SmallestSize,
+	enum Divide {
+		StandardSize,
 		SizeEight,
 		SizeFour,
 		SizeTwo,
@@ -706,7 +713,7 @@ public class RunFreightDuc {
 	/**
 	 * method for counting sizes/demand of all Shipments
 	 *
-	 * @param doc document file of an xml file
+	 * @param doc document file of a xml file
 	 * @param shipmentId  ID of the shipment
 	 * @return return the destination of the shipment
 	 */
@@ -728,6 +735,41 @@ public class RunFreightDuc {
 		return destination;
 	}
 
+	/**
+	 * writing the runtime in a txt file
+	 *
+	 * @param durationSec time in seconds
+	 * @param durationMin time in minutes
+	 */
+	private static void runTimeOutput(double durationSec, double durationMin, Controler controler) {
+		File runTimeFile = new File(controler.getControlerIO().getOutputPath()+"/analyze/runTimeFile.txt");
+		BufferedWriter buffer = null;
+		try {
+
+			// create new BufferedWriter for the output file
+			buffer = new BufferedWriter(new FileWriter(runTimeFile));
+
+
+			// put key and value separated by a tab
+			buffer.write("Die Laufzeit des Szenarios beträgt: "+ durationSec +" s \t  "+ durationMin +" min");
+
+			// new line
+			buffer.newLine();
+
+
+			buffer.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+
+			try {
+
+				// close the writer
+				buffer.close();
+			} catch (Exception e) {
+			}
+		}
+	}
 
 
 
