@@ -24,7 +24,7 @@ public class CreateCarriersWithRandomDistribution {
   public static void main(String[] args){
     final int nuOfDestinations = 4; // 4 oder 5 nach deine Wahl
     final int nuOfJobsToCreate = nuOfDestinations * 24;
-    final int randomSeed = 3711; //Damit bei mehrfacher Ausführung jeweils die gleichen Daten gezogen werden.
+    final int randomSeed = 25; //Damit bei mehrfacher Ausführung jeweils die gleichen Daten gezogen werden.
     createCarrierWithRandomDistribution(nuOfJobsToCreate, nuOfDestinations, randomSeed);
   }
 
@@ -32,8 +32,10 @@ public class CreateCarriersWithRandomDistribution {
     Random random = MatsimRandom.getRandom();
     random.setSeed(randomSeed);
 
+    final String carrierName = "RandomCarrier_" + nuOfDestinations + "_RS" + randomSeed;
+
     Carriers carriers = new Carriers();
-    Carrier carrier = CarrierUtils.createCarrier(Id.create("myCarrier", Carrier.class)); //@Duc: Von mir aus kannst du den auch ander benennen. Kai feb'24
+    Carrier carrier = CarrierUtils.createCarrier(Id.create(carrierName, Carrier.class)); //@Duc: Von mir aus kannst du den auch ander benennen. Kai feb'24
 
     LinkedList<String> destinationList = new LinkedList<>(Arrays.asList("108280", "104051", "15863", "143950", "143810")); //""143810" ist nur im 5-locations-Scenario enthalten
 
@@ -71,6 +73,7 @@ public class CreateCarriersWithRandomDistribution {
     CarrierUtils.setJspritIterations(carrier, 1);
 
     carriers.addCarrier(carrier);
-    new CarrierPlanWriter(carriers).write("input/RandomCarriers_"+nuOfDestinations+"_RS"+randomSeed+".xml");
+
+    new CarrierPlanWriter(carriers).write("input/" + carrierName + ".xml");
   }
 }
