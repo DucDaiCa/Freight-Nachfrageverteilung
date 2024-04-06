@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <carriers xmlns="http://www.matsim.org/files/dtd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.matsim.org/files/dtd http://www.matsim.org/files/dtd/carriersDefinitions_v2.1.xsd">
-	<carrier id="myCarrier">
+	<carrier id="RandomCarrier_5_RS3711">
 		<attributes>
 			<attribute name="jspritIterations" class="java.lang.Integer">1</attribute>
 		</attributes>

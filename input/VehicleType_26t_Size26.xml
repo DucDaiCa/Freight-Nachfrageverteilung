@@ -3,7 +3,7 @@
 <vehicleDefinitions xmlns="http://www.matsim.org/files/dtd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.matsim.org/files/dtd http://www.matsim.org/files/dtd/vehicleDefinitions_v2.0.xsd">
 
     <vehicleType id="heavy26t">
-        <description>Heavy Vehicle 26t</description>
+        <description>Heavy Vehicle 26t size 26</description>
         <capacity seats="1" standingRoomInPersons="0" other="26.0"> </capacity>
         <length meter="7.5"/>
         <width meter="1.0"/>

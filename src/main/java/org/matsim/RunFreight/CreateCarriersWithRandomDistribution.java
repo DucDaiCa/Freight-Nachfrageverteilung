@@ -22,9 +22,9 @@ import org.matsim.vehicles.VehicleUtils;
 public class CreateCarriersWithRandomDistribution {
 
   public static void main(String[] args){
-    final int nuOfDestinations = 4; // 4 oder 5 nach deine Wahl
+    final int nuOfDestinations = 5; // 4 oder 5 nach deine Wahl
     final int nuOfJobsToCreate = nuOfDestinations * 24;
-    final int randomSeed = 25; //Damit bei mehrfacher Ausführung jeweils die gleichen Daten gezogen werden.
+    final int randomSeed = 1711; //Damit bei mehrfacher Ausführung jeweils die gleichen Daten gezogen werden.
     createCarrierWithRandomDistribution(nuOfJobsToCreate, nuOfDestinations, randomSeed);
   }
 
@@ -35,7 +35,7 @@ public class CreateCarriersWithRandomDistribution {
     final String carrierName = "RandomCarrier_" + nuOfDestinations + "_RS" + randomSeed;
 
     Carriers carriers = new Carriers();
-    Carrier carrier = CarrierUtils.createCarrier(Id.create(carrierName, Carrier.class)); //@Duc: Von mir aus kannst du den auch ander benennen. Kai feb'24
+    Carrier carrier = CarrierUtils.createCarrier(Id.create(carrierName, Carrier.class));
 
     LinkedList<String> destinationList = new LinkedList<>(Arrays.asList("108280", "104051", "15863", "143950", "143810")); //""143810" ist nur im 5-locations-Scenario enthalten
 
