@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <carriers xmlns="http://www.matsim.org/files/dtd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.matsim.org/files/dtd http://www.matsim.org/files/dtd/carriersDefinitions_v2.1.xsd">
-	<carrier id="carrier_FourShipments_A">
+	<carrier id="carrier_FourShipments">
 		<capabilities fleetSize="INFINITE">
 			<vehicles>
 				<vehicle id="heavy26t_59933" depotLinkId="59933" typeId="heavy26t" earliestStart="09:00:00" latestEnd="19:00:00"/>

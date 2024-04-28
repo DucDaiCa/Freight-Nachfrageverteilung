@@ -72,16 +72,17 @@ public class RunFreightDuc {
 		if ( args.length==0 ) {
 			String inputPath = "./input/";
 			args = new String[] {
-					inputPath+ "RandomCarrier_5_RS3711.xml",
-					inputPath + "VehicleType_26t_Size25.xml",
-					"50",
+					inputPath+ "RandomCarrier_5_NoSeed.xml",
+					inputPath + "VehicleType_26t_Size24.xml",
+					"1",
 					"./output/Test_Freight",
 			};
 		}
 
-		// extending xml name with the iteration count (2)
+		// extending xml name with the iteration count
 		xmlNameChangeID(args);
 
+		// changing number of runs
 		int nuOfRuns = 1;
 		for(int i = 0; i < nuOfRuns; i++) {
 			String runId = String.valueOf(i+1);
@@ -108,8 +109,8 @@ public class RunFreightDuc {
         CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
       }
 
-      // Hier geschieht der Hauptteil der Arbeit: Das Aufteilen der Shipments :)
-		Divide sizeSelection = Divide.SizeOne;
+      // Hier geschieht der Hauptteil der Arbeit: Das Zerlegen der Shipments
+	  Divide sizeSelection = Divide.SizeOne;	// Auswahl der Zerlegung
       changeShipmentSize(scenario, sizeSelection);
 
       // count the runtime of Jsprit
@@ -191,7 +192,7 @@ public class RunFreightDuc {
 	 * method for breaking up shipments into smaller ones
 	 *
 	 * @param scenario
-	 * @param sizeSelection  the size to split the shipments
+	 * @param sizeSelection  the size to break down the shipments
 	 */
 	private static void changeShipmentSize(org.matsim.api.core.v01.Scenario scenario, Divide sizeSelection) {
 
@@ -222,7 +223,7 @@ public class RunFreightDuc {
 			default -> throw new IllegalStateException("Unexpected value: " + sizeSelection);
 		}
 
-		// method to create new shipments (hier werden die Sendungen zerteilt und neue 'kleinere' Sendungen erstellt )
+		// method to create new shipments (hier werden die Sendungen zerlegt und neue 'kleinere' Sendungen erstellt )
 		createShipment(scenario, (int) Boundary_value);
 
 	}
@@ -233,6 +234,7 @@ public class RunFreightDuc {
 	/**
 	 * Building the new shipments
 	 *
+	 * @param scenario
 	 * @param Boundary_value value of the new shipment size
 	 */
 	private static void createShipment(Scenario scenario, int Boundary_value) {
@@ -253,7 +255,7 @@ public class RunFreightDuc {
 			deliveryServiceTimeBefore = sumServiceTime(carrier,deliveryServiceTimeBefore,1);
 			pickupServiceTimeBefore= sumServiceTime(carrier,pickupServiceTimeBefore,2);
 
-			//neue shipments werden erstellt
+			// new shipments are created
 			shipmentCreator(Boundary_value, carrier, newShipments, oldShipments);
 
 			// remove the old shipments
@@ -271,7 +273,7 @@ public class RunFreightDuc {
 			deliveryServiceTimeAfter = sumServiceTime(carrier,deliveryServiceTimeAfter,1);
 			pickupServiceTimeAfter = sumServiceTime(carrier,pickupServiceTimeAfter,2);
 
-			// here checking if the numbers stayed the same
+			// checking right amount of total of Shipment sizes, time windows
 			Gbl.assertIf(demandBefore == demandAfter);
 			Gbl.assertIf(deliveryServiceTimeBefore == deliveryServiceTimeAfter);
 			Gbl.assertIf(pickupServiceTimeBefore == pickupServiceTimeAfter);
@@ -298,7 +300,7 @@ public class RunFreightDuc {
 				newShipments.add(newShipment); // add the new shipment
 			}
 
-			//the new shipments are created
+			// the new shipments are created
 			if(rest != 0) {
 				for (int i = 1; i <= numShipments; i++) {
 					CarrierShipment newShipment = shipmentBuilder(carrierShipment,(i + 1), size);
@@ -348,6 +350,8 @@ public class RunFreightDuc {
 
 	}
 
+
+	// Methoden numOfShipments und sumServiceTime werden für die Überprüfung genutzt. Das die Anzahl vor und nach dem zerlegen der Sendungen gleich sind.
 	/**
 	 * method for counting sizes/demand of all Shipments
 	 *
@@ -364,7 +368,7 @@ public class RunFreightDuc {
 	}
 
 	/**
-	 * method for counting sizes/demand of all Shipments
+	 * method for sum up Delivery or Service Time
 	 *
 	 * @param carrier the already existing carrier
 	 * @param serviceTime variable to sum up service time
@@ -429,7 +433,7 @@ public class RunFreightDuc {
 				if (tourNode.getNodeType() == Node.ELEMENT_NODE) {
 					HashMap<String, Integer>  counter = new HashMap<>(); // so that he won't count the same destination more than once for a tour
 					nullHashMapBuilder(doc,counter);
-					HashMap<String, Integer> tourDestinationCounter = new HashMap<>(); //counting right amount of shipments destinations for the every tour
+					HashMap<String, Integer> tourDestinationCounter = new HashMap<>(); // counting right amount of shipments destinations for the every tour
 
 					Element tourElement = (Element) tourNode;
 					NodeList actList = tourElement.getElementsByTagName("act");
@@ -469,15 +473,13 @@ public class RunFreightDuc {
 							}
 						}
 					}
-					// writes in a file the shipments for every tour for the scenario
-					System.out.println("Zielorte der Fahrt: "+tourDestinationCounter);
-					outputTourDestination(tourDestinationCounter,fileDestinationPerTour,2);
+					// writes in a textfile the delivered shipments for every tour in the scenario
+					outputTourDestination(tourDestinationCounter,fileDestinationPerTour,1);
 				}
 			}
 
-			// writes in a file how many shipments need to be delivered to the respective location
-			outputTourDestination(countShipmentToDestination,fileShipmentsPerDestination,3);
-			System.out.println("\nAnzahl Sendungen zum jeweiligem Ort: "+ countShipmentToDestination+"\n" );
+			// writes in a textfile how many shipments need to be delivered to the respective location
+			outputTourDestination(countShipmentToDestination,fileShipmentsPerDestination,2);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -485,7 +487,8 @@ public class RunFreightDuc {
 	}
 
 	/**
-	 * writes the destination and their counts on a file
+	 * writes the number of shipments for the destination and
+	 * the deliveries for each tour in a text file
 	 *
 	 * @param map HashMap with the information
 	 */
@@ -503,7 +506,7 @@ public class RunFreightDuc {
 
 		switch(num) {
 
-			case 2: {
+			case 1: {
 				try {
 
 					// create new BufferedWriter for the output file
@@ -528,7 +531,7 @@ public class RunFreightDuc {
 				}
 			}
 			break;
-			case 3: {
+			case 2: {
 				try {
 
 					// create new BufferedWriter for the output file
@@ -538,7 +541,7 @@ public class RunFreightDuc {
 					for (Map.Entry<String, Integer> entry :
 							map.entrySet()) {
 
-						//wieviele Sendungen müssen zum jeweiligen Ort transportiert werden (und zur Kontrolle ob die Anzahl zum jeweiligen Ort korrekt ist)
+						// Ausgabe: wieviele Sendungen müssen zum jeweiligen Ort transportiert werden (und zur Kontrolle, ob die Anzahl (bei zufällig verteilter Sendungen) zum jeweiligen Ort korrekt ist)
 						bf.write("Zielort: " + entry.getKey() + "  \t  Anzahl Sendungen für "+destinationNames.get(entry.getKey())+": " + entry.getValue());
 
 
@@ -576,7 +579,7 @@ public class RunFreightDuc {
 	}
 
 	/**
-	 * method for counting sizes/demand of all Shipments
+	 * method for that returns the destination of a shipment
 	 *
 	 * @param doc document file of a xml file
 	 * @param shipmentId  ID of the shipment
@@ -602,7 +605,7 @@ public class RunFreightDuc {
 
 
 	/**
-	 * writing the runtime in a txt file
+	 * writing the runtime in a text file
 	 *
 	 * @param durationSec time in seconds
 	 * @param durationMin time in minutes
@@ -644,7 +647,7 @@ public class RunFreightDuc {
 	 */
 	private static void xmlNameChangeID(String[] args) {
 		try {
-			//loading XML-document
+			// loading XML-document
 			File inputFile = new File(args[0]);
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
@@ -692,24 +695,4 @@ public class RunFreightDuc {
 			e.printStackTrace();
 		}
 	}
-
-
-	// yyyy I think that having a central freight StrategyManager would be better than the current approach that builds an ad-hoc such
-	// strategy manager, with the strategies hardcoded there as well.  I currently see two approaches:
-
-	// (1) freight strategy manager separate from  standard strategy manager.
-
-	// (2) re-use standard strategy manager.
-
-	// Advantage of (2) would be that we could re-use the existing strategy manager infrastructure, including the way it is configured.
-	// Disadvantage would be that the "freight" subpopulation (or maybe even freight*) would be an implicitly reserved keyword.  Todos for this path:
-
-	// * remove deprecated methods from StrategyManager so that it becomes shorter; make final; etc. etc.
-
-	// * try to completely remove StrategyManager and replace by GenericStrategyManager.  Since only then will it accept Carriers and CarrierPlans.
-
-	// Note that the freight strategy manager operates on CarrierPlans, which include _all_ tours/drivers.  One could also have drivers optimize
-	// individually.  They are, however, not part of the standard population.
-
-	// kai, jan'22
 }
