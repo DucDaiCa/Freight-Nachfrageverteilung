@@ -620,7 +620,7 @@ public class RunFreightDuc {
 
 
 			// put key and value separated by a tab
-			buffer.write("Die Laufzeit des Szenarios beträgt: "+ durationSec +" s \t  "+ durationMin +" min");
+			buffer.write("Rechenzeit von jsprit: "+ durationSec +" s \t  "+ durationMin +" min");
 
 			// new line
 			buffer.newLine();
